@@ -1,0 +1,159 @@
+'use client'
+
+import { createContext, useContext, useEffect, useState } from 'react'
+import { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, username: string) => Promise<void>
+  signOut: () => Promise<void>
+  signInWithGoogle: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  signInWithGoogle: async () => {},
+})
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    // 初回認証状態チェック
+    checkUser()
+
+    // 認証状態の変更を監視
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+      
+      if (event === 'SIGNED_IN') {
+        // プロフィールが存在しない場合は作成
+        if (currentUser) {
+          await createProfileIfNotExists(currentUser)
+        }
+      }
+    })
+
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
+  }, [])
+
+  const checkUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    } catch (error) {
+      console.error('Auth check error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createProfileIfNotExists = async (user: User) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      // プロフィールを作成
+      const username = user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`
+      
+      await supabase.from('profiles').insert({
+        id: user.id,
+        username,
+        display_name: username,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      })
+    }
+  }
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    
+    if (error) throw error
+    router.push('/')
+  }
+
+  const signUp = async (email: string, password: string, username: string) => {
+    // ユーザー登録
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username,
+        },
+      },
+    })
+    
+    if (error) throw error
+    
+    // プロフィール作成
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        username,
+        display_name: username,
+      })
+    }
+    
+    router.push('/')
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    router.push('/')
+  }
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    
+    if (error) throw error
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        signInWithGoogle,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}

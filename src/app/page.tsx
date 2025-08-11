@@ -1,103 +1,157 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import ModelCard from '@/components/ui/ModelCard'
+import { mockModels } from '@/lib/mockData'
+import { Model } from '@/types'
+import { TrendingUp, Clock, Star, Download } from 'lucide-react'
+
+const tabs = [
+  { id: 'trending', label: 'トレンド', icon: TrendingUp },
+  { id: 'newest', label: '新着', icon: Clock },
+  { id: 'popular', label: '人気', icon: Star },
+  { id: 'downloaded', label: 'DL数順', icon: Download },
+]
+
+const timeRanges = [
+  { id: '24h', label: '24時間' },
+  { id: 'week', label: '週間' },
+  { id: 'month', label: '月間' },
+  { id: 'all', label: '全期間' },
+]
+
+export default function HomePage() {
+  const [activeTab, setActiveTab] = useState('trending')
+  const [timeRange, setTimeRange] = useState('24h')
+  const [models, setModels] = useState<Model[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // モックデータを使用（将来的にはSupabaseから取得）
+    setIsLoading(true)
+    setTimeout(() => {
+      const sortedModels = [...mockModels]
+      
+      switch (activeTab) {
+        case 'trending':
+          sortedModels.sort((a, b) => {
+            const scoreA = a.viewCount + a.likeCount * 2 + a.downloadCount * 3
+            const scoreB = b.viewCount + b.likeCount * 2 + b.downloadCount * 3
+            return scoreB - scoreA
+          })
+          break
+        case 'newest':
+          sortedModels.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          break
+        case 'popular':
+          sortedModels.sort((a, b) => b.likeCount - a.likeCount)
+          break
+        case 'downloaded':
+          sortedModels.sort((a, b) => b.downloadCount - a.downloadCount)
+          break
+      }
+      
+      setModels(sortedModels)
+      setIsLoading(false)
+    }, 500)
+  }, [activeTab, timeRange])
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="p-6">
+      {/* ヘッダー */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">
+          3Dモデルを探す
+        </h1>
+        <p className="mt-2 text-gray-600">
+          クリエイターが作成した高品質な3Dモデルを見つけよう
+        </p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* タブナビゲーション */}
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+          
+          {/* 期間選択 */}
+          {activeTab === 'trending' && (
+            <div className="flex gap-1 rounded-lg bg-white p-1">
+              {timeRanges.map((range) => (
+                <button
+                  key={range.id}
+                  onClick={() => setTimeRange(range.id)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    timeRange === range.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* カテゴリタグ */}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2">
+          {['すべて', 'キャラクター', '建築', '乗り物', '自然', '武器', 'アニメーション'].map((category) => (
+            <button
+              key={category}
+              className="rounded-full border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* モデル一覧 */}
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto" />
+            <p className="mt-4 text-gray-600">読み込み中...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {models.map((model) => (
+              <ModelCard key={model.id} model={model} />
+            ))}
+          </div>
+          
+          {/* もっと見る */}
+          <div className="mt-8 text-center">
+            <button className="rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              もっと見る
+            </button>
+          </div>
+        </>
+      )}
     </div>
-  );
+  )
 }

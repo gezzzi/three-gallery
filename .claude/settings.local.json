@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(git config:*)"
+    ]
+  },
+  "disableAllHooks": true
+}
