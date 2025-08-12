@@ -189,5 +189,166 @@ export const mockModels: Model[] = [
     updatedAt: '2024-06-30T18:00:00Z',
     polygonCount: 250000,
     fileSize: 85000000
+  },
+  {
+    id: '7',
+    userId: '1',
+    user: mockUsers[0],
+    title: '回転するカラフルキューブ',
+    description: 'Three.jsで作成したインタラクティブな回転キューブ。マウスで操作可能。',
+    fileUrl: '',
+    thumbnailUrl: '',
+    hasAnimation: true,
+    licenseType: 'MIT',
+    isCommercialOk: true,
+    price: 0,
+    currency: 'JPY',
+    isFree: true,
+    viewCount: 8901,
+    downloadCount: 567,
+    likeCount: 234,
+    status: 'public',
+    tags: ['コード', 'Three.js', 'インタラクティブ', 'チュートリアル'],
+    metadata: {},
+    createdAt: '2024-11-20T10:00:00Z',
+    updatedAt: '2024-11-20T10:00:00Z',
+    modelType: 'code',
+    code: `// 回転するカラフルキューブ
+const geometry = new THREE.BoxGeometry(2, 2, 2);
+const material = new THREE.MeshPhongMaterial({
+  color: 0x00ff00,
+  emissive: 0x004400,
+  shininess: 100
+});
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+// 回転アニメーション
+let userAnimate = function() {
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.02;
+  
+  // 色の変化
+  const time = Date.now() * 0.001;
+  const r = Math.sin(time) * 0.5 + 0.5;
+  const g = Math.sin(time + 2) * 0.5 + 0.5;
+  const b = Math.sin(time + 4) * 0.5 + 0.5;
+  material.color.setRGB(r, g, b);
+};`
+  },
+  {
+    id: '8',
+    userId: '2',
+    user: mockUsers[1],
+    title: 'パーティクルシステム - 星空',
+    description: 'Three.jsで実装した美しい星空のパーティクルエフェクト。',
+    fileUrl: '',
+    thumbnailUrl: '',
+    hasAnimation: true,
+    licenseType: 'CC BY',
+    isCommercialOk: true,
+    price: 0,
+    currency: 'JPY',
+    isFree: true,
+    viewCount: 15678,
+    downloadCount: 890,
+    likeCount: 567,
+    status: 'public',
+    tags: ['コード', 'Three.js', 'パーティクル', 'エフェクト'],
+    metadata: {},
+    createdAt: '2024-11-18T14:30:00Z',
+    updatedAt: '2024-11-18T14:30:00Z',
+    modelType: 'code',
+    code: `// パーティクルシステム - 星空
+const particlesGeometry = new THREE.BufferGeometry();
+const particleCount = 5000;
+const positions = new Float32Array(particleCount * 3);
+const colors = new Float32Array(particleCount * 3);
+
+for (let i = 0; i < particleCount * 3; i += 3) {
+  positions[i] = (Math.random() - 0.5) * 50;
+  positions[i + 1] = (Math.random() - 0.5) * 50;
+  positions[i + 2] = (Math.random() - 0.5) * 50;
+  
+  colors[i] = Math.random();
+  colors[i + 1] = Math.random();
+  colors[i + 2] = Math.random();
+}
+
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+const particlesMaterial = new THREE.PointsMaterial({
+  size: 0.2,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.8,
+  blending: THREE.AdditiveBlending
+});
+
+const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particles);
+
+// アニメーション
+let userAnimate = function() {
+  particles.rotation.y += 0.001;
+  particles.rotation.x += 0.0005;
+};`
+  },
+  {
+    id: '9',
+    userId: '3',
+    user: mockUsers[2],
+    title: 'ジェネラティブアート - 波形',
+    description: 'Sin波を使った動的な3Dジェネラティブアート。',
+    fileUrl: '',
+    thumbnailUrl: '',
+    hasAnimation: true,
+    licenseType: 'MIT',
+    isCommercialOk: true,
+    price: 1500,
+    currency: 'JPY',
+    isFree: false,
+    viewCount: 9876,
+    downloadCount: 234,
+    likeCount: 456,
+    status: 'public',
+    tags: ['コード', 'Three.js', 'ジェネラティブ', 'アート'],
+    metadata: {},
+    createdAt: '2024-11-15T09:00:00Z',
+    updatedAt: '2024-11-15T09:00:00Z',
+    modelType: 'code',
+    code: `// ジェネラティブアート - 波形
+const planeGeometry = new THREE.PlaneGeometry(20, 20, 50, 50);
+const planeMaterial = new THREE.MeshPhongMaterial({
+  color: 0x00aaff,
+  side: THREE.DoubleSide,
+  wireframe: false,
+  flatShading: true
+});
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = -Math.PI / 2;
+scene.add(plane);
+
+const vertices = planeGeometry.attributes.position.array;
+const originalVertices = [...vertices];
+
+// 波のアニメーション
+let userAnimate = function() {
+  const time = Date.now() * 0.001;
+  
+  for (let i = 0; i < vertices.length; i += 3) {
+    const x = originalVertices[i];
+    const y = originalVertices[i + 1];
+    
+    const wave1 = Math.sin(x * 0.5 + time) * 2;
+    const wave2 = Math.sin(y * 0.5 + time * 1.5) * 1;
+    
+    vertices[i + 2] = wave1 + wave2;
+  }
+  
+  planeGeometry.attributes.position.needsUpdate = true;
+  planeGeometry.computeVertexNormals();
+};`
   }
 ]

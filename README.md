@@ -1,22 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Three Gallery - 3Dモデル共有プラットフォーム
 
-## Getting Started
+3Dモデルを投稿・共有・販売できるウェブアプリケーションです。
 
-First, run the development server:
+## 機能
+
+- 🎨 3Dモデルのアップロード・閲覧
+- 🔍 検索・フィルタリング機能
+- 💰 Stripeを使った決済機能
+- 👤 ユーザープロフィール
+- 💬 コメント機能
+- ❤️ いいね・フォロー機能
+
+## 技術スタック
+
+- **Frontend**: Next.js 15, React 18, TypeScript
+- **3D**: Three.js, React Three Fiber
+- **Styling**: Tailwind CSS
+- **Database**: Supabase
+- **Payment**: Stripe
+- **Deployment**: Vercel
+
+## セットアップ
+
+### 1. 環境変数の設定
+
+`.env.local.example`を`.env.local`にコピーして、必要な環境変数を設定してください：
+
+```bash
+cp .env.local.example .env.local
+```
+
+### 2. 依存関係のインストール
+
+```bash
+npm install
+```
+
+### 3. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

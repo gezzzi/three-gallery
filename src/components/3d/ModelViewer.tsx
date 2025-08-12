@@ -3,19 +3,26 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage, Grid, useGLTF, Html, PerspectiveCamera } from '@react-three/drei'
+import { ErrorBoundary } from 'react-error-boundary'
 import * as THREE from 'three'
+import dynamic from 'next/dynamic'
+
+const CodeSandbox = dynamic(() => import('./CodeSandbox'), { ssr: false })
+const CodeEditor = dynamic(() => import('../ui/CodeEditor'), { ssr: false })
 
 interface ModelViewerProps {
-  modelUrl: string
+  modelUrl?: string
+  code?: string
+  modelType?: 'file' | 'code'
   autoRotate?: boolean
   showGrid?: boolean
+  showCodeEditor?: boolean
   onLoad?: () => void
   onError?: (error: Error) => void
 }
 
 function Model({ url, onLoad }: { url: string; onLoad?: () => void }) {
   const { scene, animations } = useGLTF(url)
-
   const mixer = useRef<THREE.AnimationMixer | null>(null)
   
   useEffect(() => {
@@ -66,61 +73,116 @@ function ErrorFallback({ error }: { error?: Error }) {
 
 export default function ModelViewer({ 
   modelUrl, 
+  code,
+  modelType = 'file',
   autoRotate = true, 
   showGrid = true,
+  showCodeEditor = false,
   onLoad,
   onError 
 }: ModelViewerProps) {
   const [error, setError] = useState<Error | null>(null)
   const [, setIsLoading] = useState(true)
+  const [currentCode, setCurrentCode] = useState(code || '')
+  const [showEditor, setShowEditor] = useState(showCodeEditor)
 
   const handleLoad = () => {
     setIsLoading(false)
     onLoad?.()
   }
 
-  const handleError = (error: Error) => {
-    setError(error)
+  const handleError = (err: Error) => {
+    setError(err)
     setIsLoading(false)
-    onError?.(error)
+    onError?.(err)
+  }
+
+  // コード実行タイプの場合
+  if (modelType === 'code' && code) {
+    return (
+      <div className="relative h-full w-full">
+        {showEditor ? (
+          <div className="flex h-full flex-col lg:flex-row">
+            <div className="h-1/2 lg:h-full lg:w-1/2">
+              <CodeEditor
+                initialCode={currentCode}
+                onChange={setCurrentCode}
+                height="100%"
+                showControls={true}
+                onRun={(newCode) => setCurrentCode(newCode)}
+              />
+            </div>
+            <div className="h-1/2 lg:h-full lg:w-1/2">
+              <CodeSandbox code={currentCode} height="100%" />
+            </div>
+          </div>
+        ) : (
+          <CodeSandbox code={currentCode} height="100%" />
+        )}
+        
+        {/* コントロールUI */}
+        <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+          <button
+            className="rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            onClick={() => setShowEditor(!showEditor)}
+          >
+            {showEditor ? 'プレビューのみ' : 'エディタを表示'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ファイルタイプの場合（既存の実装）
+  if (!modelUrl) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-gray-500">モデルURLが指定されていません</p>
+      </div>
+    )
   }
 
   return (
     <div className="relative h-full w-full">
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[0, 2, 5]} />
-        <Suspense fallback={<LoadingFallback />}>
-          {error ? (
-            <ErrorFallback error={error} />
-          ) : (
-            <>
-              <Stage
-                intensity={0.5}
-                preset="rembrandt"
-                environment="city"
-              >
-                <Model 
-                  url={modelUrl} 
-                  onLoad={handleLoad}
-                />
-              </Stage>
-              {showGrid && (
-                <Grid
-                  args={[10, 10]}
-                  cellSize={0.5}
-                  cellThickness={0.5}
-                  cellColor={'#6b7280'}
-                  sectionSize={3}
-                  sectionThickness={1}
-                  sectionColor={'#9ca3af'}
-                  fadeDistance={30}
-                  fadeStrength={1}
-                  followCamera={false}
-                />
-              )}
-            </>
-          )}
-        </Suspense>
+        <ErrorBoundary
+          fallbackRender={({ error: err }) => <ErrorFallback error={err} />}
+          onError={handleError}
+        >
+          <Suspense fallback={<LoadingFallback />}>
+            {error ? (
+              <ErrorFallback error={error} />
+            ) : (
+              <>
+                <Stage
+                  intensity={0.5}
+                  preset="rembrandt"
+                  environment="city"
+                >
+                  <Model 
+                    url={modelUrl} 
+                    onLoad={handleLoad}
+                  />
+                </Stage>
+                {showGrid && (
+                  <Grid
+                    args={[10, 10]}
+                    cellSize={0.5}
+                    cellThickness={0.5}
+                    cellColor={'#6b7280'}
+                    sectionSize={3}
+                    sectionThickness={1}
+                    sectionColor={'#9ca3af'}
+                    fadeDistance={30}
+                    fadeStrength={1}
+                    followCamera={false}
+                  />
+                )}
+              </>
+            )}
+          </Suspense>
+        </ErrorBoundary>
         <OrbitControls 
           autoRotate={autoRotate && !error}
           autoRotateSpeed={0.5}

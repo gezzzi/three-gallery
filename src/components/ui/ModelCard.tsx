@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, Download, Eye, Tag } from 'lucide-react'
+import { Heart, Download, Eye, Tag, Code } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { useState } from 'react'
@@ -35,19 +35,27 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
               <div className="text-gray-500">
-                <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+                {model.modelType === 'code' ? (
+                  <Code className="h-12 w-12" />
+                ) : (
+                  <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                )}
               </div>
             </div>
           )}
           
-          {/* アニメーションバッジ */}
-          {model.hasAnimation && (
+          {/* バッジ */}
+          {model.modelType === 'code' ? (
+            <div className="absolute left-2 top-2 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white">
+              Three.jsコード
+            </div>
+          ) : model.hasAnimation ? (
             <div className="absolute left-2 top-2 rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white">
               アニメーション
             </div>
-          )}
+          ) : null}
           
           {/* 価格バッジ */}
           <div className="absolute right-2 top-2">

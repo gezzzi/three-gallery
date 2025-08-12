@@ -64,7 +64,12 @@ export default function ViewPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 3Dビューア */}
       <div className="h-[60vh] bg-gray-900">
-        <ModelViewer modelUrl={model.fileUrl} />
+        <ModelViewer 
+          modelUrl={model.modelType === 'file' ? model.fileUrl : undefined}
+          code={model.modelType === 'code' ? model.code : undefined}
+          modelType={model.modelType || 'file'}
+          showCodeEditor={model.modelType === 'code'}
+        />
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8">

@@ -7,9 +7,10 @@ export const stripePromise = loadStripe(
 )
 
 // サーバー側のStripe
-export const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY || ''
-)
+// 環境変数が設定されていない場合はnullを返す
+export const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null
 
 export interface CreateCheckoutSessionParams {
   modelId: string
@@ -22,6 +23,10 @@ export interface CreateCheckoutSessionParams {
 }
 
 export async function createCheckoutSession(params: CreateCheckoutSessionParams) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.')
+  }
+  
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -62,6 +67,10 @@ export async function createTipSession(params: {
   successUrl: string
   cancelUrl: string
 }) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.')
+  }
+  
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -96,6 +105,10 @@ export async function createSubscription(params: {
   successUrl: string
   cancelUrl: string
 }) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.')
+  }
+  
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -118,6 +131,10 @@ export async function handleWebhook(
   signature: string,
   webhookSecret: string
 ) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.')
+  }
+  
   let event: Stripe.Event
 
   try {

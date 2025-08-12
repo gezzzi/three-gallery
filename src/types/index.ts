@@ -39,6 +39,8 @@ export interface Model {
   metadata: Record<string, unknown>
   createdAt: string
   updatedAt: string
+  modelType?: 'file' | 'code'
+  code?: string
 }
 
 export interface Tag {
