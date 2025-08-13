@@ -1,0 +1,56 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#1F2937"/>
+  
+  <!-- Grid floor -->
+  <g opacity="0.3">
+    <line x1="100" y1="400" x2="700" y2="400" stroke="#4B5563" stroke-width="1"/>
+    <line x1="150" y1="420" x2="650" y2="420" stroke="#4B5563" stroke-width="1"/>
+    <line x1="200" y1="440" x2="600" y2="440" stroke="#4B5563" stroke-width="1"/>
+    <line x1="250" y1="460" x2="550" y2="460" stroke="#4B5563" stroke-width="1"/>
+    <line x1="300" y1="480" x2="500" y2="480" stroke="#4B5563" stroke-width="1"/>
+    
+    <line x1="200" y1="350" x2="200" y2="480" stroke="#4B5563" stroke-width="1"/>
+    <line x1="300" y1="350" x2="300" y2="480" stroke="#4B5563" stroke-width="1"/>
+    <line x1="400" y1="350" x2="400" y2="480" stroke="#4B5563" stroke-width="1"/>
+    <line x1="500" y1="350" x2="500" y2="480" stroke="#4B5563" stroke-width="1"/>
+    <line x1="600" y1="350" x2="600" y2="480" stroke="#4B5563" stroke-width="1"/>
+  </g>
+  
+  <!-- 3D object (low poly style) -->
+  <g transform="translate(400, 250)">
+    <!-- Shadow -->
+    <ellipse cx="0" cy="150" rx="80" ry="20" fill="#000000" opacity="0.3"/>
+    
+    <!-- Back faces -->
+    <path d="M-60 20 L0 -80 L60 20 L0 60 Z" fill="#4B5563"/>
+    <path d="M60 20 L0 -80 L0 -120 L80 0 Z" fill="#6B7280"/>
+    <path d="M-60 20 L0 -80 L0 -120 L-80 0 Z" fill="#374151"/>
+    
+    <!-- Front faces -->
+    <path d="M-60 20 L0 60 L0 100 L-80 40 Z" fill="#60A5FA"/>
+    <path d="M60 20 L0 60 L0 100 L80 40 Z" fill="#3B82F6"/>
+    <path d="M0 60 L0 100 L0 100 Z" fill="#2563EB"/>
+    
+    <!-- Top face -->
+    <path d="M-80 0 L0 -120 L80 0 L0 40 Z" fill="#93C5FD"/>
+    
+    <!-- Highlight edges -->
+    <path d="M-80 0 L0 -120 L80 0" stroke="#DBEAFE" stroke-width="2" fill="none"/>
+    <path d="M0 -120 L0 -80" stroke="#DBEAFE" stroke-width="2" fill="none"/>
+  </g>
+  
+  <!-- Axis indicators -->
+  <g transform="translate(100, 100)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#EF4444" stroke-width="2"/>
+    <text x="45" y="5" font-family="Arial, sans-serif" font-size="12" fill="#EF4444">X</text>
+    
+    <line x1="0" y1="0" x2="0" y2="-40" stroke="#22C55E" stroke-width="2"/>
+    <text x="-5" y="-45" font-family="Arial, sans-serif" font-size="12" fill="#22C55E">Y</text>
+    
+    <line x1="0" y1="0" x2="28" y2="28" stroke="#3B82F6" stroke-width="2"/>
+    <text x="30" y="35" font-family="Arial, sans-serif" font-size="12" fill="#3B82F6">Z</text>
+  </g>
+  
+  <!-- Text -->
+  <text x="400" y="550" font-family="Arial, sans-serif" font-size="24" fill="#9CA3AF" text-anchor="middle">3D Model</text>
+</svg>

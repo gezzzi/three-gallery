@@ -221,7 +221,7 @@ export default function UploadPage() {
             },
             title: result.model.title,
             description: result.model.description || '',
-            thumbnailUrl: result.model.thumbnail_url || '/placeholder-3d.jpg',
+            thumbnailUrl: result.model.thumbnail_url || '/placeholder-3d.svg',
             fileUrl: result.model.file_url,
             fileSize: result.model.file_size || 0,
             polygonCount: result.model.polygon_count || 0,

@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { Menu, Search, Upload, Bell, User, LogOut, Settings, Bookmark } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Menu, Search, Upload, Bell, User, LogOut, Settings } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -17,6 +17,24 @@ export default function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // 外側クリックでメニューを閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserMenu])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,7 +97,7 @@ export default function Header() {
 
         {!loading && (
           user ? (
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="h-8 w-8 rounded-full bg-gray-300 hover:ring-2 hover:ring-blue-500 transition-all"
@@ -99,7 +117,7 @@ export default function Header() {
               
               {/* ユーザーメニュードロップダウン */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg border">
+                <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg border z-50">
                   <Link
                     href="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
@@ -107,14 +125,6 @@ export default function Header() {
                   >
                     <User className="h-4 w-4" />
                     プロフィール
-                  </Link>
-                  <Link
-                    href="/bookmarks"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
-                    onClick={() => setShowUserMenu(false)}
-                  >
-                    <Bookmark className="h-4 w-4" />
-                    ブックマーク
                   </Link>
                   <Link
                     href="/settings"

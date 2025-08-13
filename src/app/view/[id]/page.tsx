@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Flag, Eye, Calendar, Tag, DollarSign } from 'lucide-react'
+import { Heart, Download, Share2, Flag, Eye, Calendar, Tag, DollarSign, Bookmark } from 'lucide-react'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
 import { useStore } from '@/store/useStore'
+import { useBookmark } from '@/hooks/useBookmark'
+import { useLike } from '@/hooks/useLike'
 
 // 3Dビューアを動的インポート（SSR無効化）
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
@@ -27,10 +29,12 @@ const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
 export default function ViewPage() {
   const params = useParams()
   const [model, setModel] = useState<Model | null>(null)
-  const [isLiked, setIsLiked] = useState(false)
   const [relatedModels, setRelatedModels] = useState<Model[]>([])
   const [activeTab, setActiveTab] = useState('description')
   const storedModels = useStore((state) => state.models)
+  const addToHistory = useStore((state) => state.addToHistory)
+  const { isBookmarked, toggleBookmark } = useBookmark(params.id as string)
+  const { isLiked, toggleLike, likeCount } = useLike(params.id as string)
 
   useEffect(() => {
     // storeとモックデータから該当モデルを取得
@@ -40,8 +44,10 @@ export default function ViewPage() {
       setModel(foundModel)
       // 関連モデルを取得（同じユーザーの他の作品）
       setRelatedModels(allModels.filter(m => m.userId === foundModel.userId && m.id !== foundModel.id))
+      // 閲覧履歴に追加
+      addToHistory(foundModel.id)
     }
-  }, [params.id, storedModels])
+  }, [params.id, storedModels, addToHistory])
 
   if (!model) {
     return (
@@ -101,7 +107,7 @@ export default function ViewPage() {
 
               <div className="mt-4 flex gap-2">
                 <button
-                  onClick={() => setIsLiked(!isLiked)}
+                  onClick={toggleLike}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
                     isLiked
                       ? 'bg-red-50 text-red-600'
@@ -109,7 +115,19 @@ export default function ViewPage() {
                   }`}
                 >
                   <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-                  <span>{formatNumber(model.likeCount + (isLiked ? 1 : 0))}</span>
+                  <span>{formatNumber(likeCount || model.likeCount)}</span>
+                </button>
+                
+                <button
+                  onClick={toggleBookmark}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
+                    isBookmarked
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
+                  <span>ブックマーク</span>
                 </button>
                 
                 <button className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200">

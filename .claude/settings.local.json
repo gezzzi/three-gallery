@@ -9,7 +9,8 @@
       "Bash(taskkill:*)",
       "Bash(npx tailwindcss init:*)",
       "Bash(git config:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(curl:*)"
     ]
   },
   "disableAllHooks": true

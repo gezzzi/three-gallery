@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useStore } from '@/store/useStore'
 
 export function useFollow(targetUserId: string) {
   const { user } = useAuth()
   const [isFollowing, setIsFollowing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const { followingUsers, addFollowing, removeFollowing } = useStore()
 
   useEffect(() => {
     if (user && targetUserId) {
@@ -17,25 +19,63 @@ export function useFollow(targetUserId: string) {
   const checkFollowStatus = async () => {
     if (!user) return
 
-    const { data } = await supabase
-      .from('follows')
-      .select('*')
-      .eq('follower_id', user.id)
-      .eq('following_id', targetUserId)
-      .single()
+    // まずローカルストアをチェック
+    if (followingUsers.includes(targetUserId)) {
+      setIsFollowing(true)
+      return
+    }
 
-    setIsFollowing(!!data)
+    // Supabaseが設定されているかチェック
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
+      // ローカルモードの場合はストアの状態を使用
+      setIsFollowing(followingUsers.includes(targetUserId))
+      return
+    }
+
+    try {
+      const { data } = await supabase
+        .from('follows')
+        .select('*')
+        .eq('follower_id', user.id)
+        .eq('following_id', targetUserId)
+        .single()
+
+      setIsFollowing(!!data)
+    } catch (error) {
+      console.log('Follow check error:', error)
+      // エラーの場合はローカルストアの状態を使用
+      setIsFollowing(followingUsers.includes(targetUserId))
+    }
   }
 
   const toggleFollow = async () => {
     if (!user) {
-      // ログインモーダルを表示
+      alert('フォローするにはログインが必要です')
       return
     }
 
     setLoading(true)
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      
+      if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
+        // ローカルモードの場合はストアのみ更新
+        if (isFollowing) {
+          removeFollowing(targetUserId)
+          setIsFollowing(false)
+        } else {
+          addFollowing(targetUserId)
+          setIsFollowing(true)
+        }
+        setLoading(false)
+        return
+      }
+
       if (isFollowing) {
         // アンフォロー
         await supabase
@@ -44,6 +84,7 @@ export function useFollow(targetUserId: string) {
           .eq('follower_id', user.id)
           .eq('following_id', targetUserId)
 
+        removeFollowing(targetUserId)
         setIsFollowing(false)
       } else {
         // フォロー
@@ -54,6 +95,7 @@ export function useFollow(targetUserId: string) {
             following_id: targetUserId,
           })
 
+        addFollowing(targetUserId)
         setIsFollowing(true)
       }
     } catch (error) {

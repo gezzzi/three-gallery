@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, TrendingUp, Users, Bookmark, Settings, Tag, Clock, Download } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Home, TrendingUp, Users, Bookmark, Heart, Settings, Tag, Clock, ShoppingBag } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 
@@ -10,9 +11,10 @@ const menuItems = [
   { icon: Home, label: 'ホーム', href: '/' },
   { icon: TrendingUp, label: 'トレンド', href: '/trending' },
   { icon: Users, label: 'フォロー中', href: '/following' },
-  { icon: Bookmark, label: 'ライブラリ', href: '/library' },
+  { icon: Bookmark, label: 'ブックマーク', href: '/bookmarks' },
+  { icon: Heart, label: 'いいね', href: '/likes' },
   { icon: Clock, label: '履歴', href: '/history' },
-  { icon: Download, label: 'ダウンロード', href: '/downloads' },
+  { icon: ShoppingBag, label: '購入', href: '/purchases' },
   { icon: Settings, label: '設定', href: '/settings' },
 ]
 
@@ -32,11 +34,19 @@ const popularTags = [
 export default function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen } = useStore()
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // 初回レンダリング時はデフォルト値を使用してHydrationエラーを防ぐ
+  const sidebarState = isClient ? isSidebarOpen : true
 
   return (
     <aside className={cn(
       "fixed left-0 top-16 h-[calc(100vh-64px)] w-64 overflow-y-auto border-r bg-white transition-transform duration-300",
-      isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      sidebarState ? "translate-x-0" : "-translate-x-full"
     )}>
       {/* メインメニュー */}
       <nav className="p-4">
@@ -96,7 +106,7 @@ export default function Sidebar() {
           <Link href="/privacy" className="hover:text-gray-700">プライバシー</Link>
         </div>
         <div className="mt-2">
-          © 2024 ThreeGallery
+          © 2025 ThreeGallery
         </div>
       </div>
     </aside>

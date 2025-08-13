@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, Download, Eye, Tag, Code } from 'lucide-react'
+import { Heart, Download, Eye, Tag, Code, Bookmark } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { useState } from 'react'
+import { useBookmark } from '@/hooks/useBookmark'
+import { useLike } from '@/hooks/useLike'
 
 interface ModelCardProps {
   model: Model
@@ -12,12 +14,20 @@ interface ModelCardProps {
 }
 
 export default function ModelCard({ model, showUser = true }: ModelCardProps) {
-  const [isLiked, setIsLiked] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const { isBookmarked, toggleBookmark } = useBookmark(model.id)
+  const { isLiked, toggleLike, likeCount } = useLike(model.id)
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
-    setIsLiked(!isLiked)
+    e.stopPropagation()
+    toggleLike()
+  }
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleBookmark()
   }
 
   return (
@@ -25,12 +35,15 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
       <div className="group relative overflow-hidden rounded-lg border bg-white transition-all hover:shadow-lg">
         {/* サムネイル */}
         <div className="relative aspect-video overflow-hidden bg-gray-100">
-          {model.thumbnailUrl && !imageError ? (
+          {model.thumbnailUrl && model.thumbnailUrl !== '' && !imageError ? (
             <img
               src={model.thumbnailUrl}
               alt={model.title}
               className="h-full w-full object-cover transition-transform group-hover:scale-105"
-              onError={() => setImageError(true)}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+                setImageError(true)
+              }}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
@@ -71,13 +84,20 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
           </div>
 
           {/* ホバー時のアクション */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
             <button
               onClick={handleLike}
               className="rounded-full bg-white p-3 shadow-lg transition-transform hover:scale-110"
               aria-label="いいね"
             >
               <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
+            </button>
+            <button
+              onClick={handleBookmark}
+              className="rounded-full bg-white p-3 shadow-lg transition-transform hover:scale-110"
+              aria-label="ブックマーク"
+            >
+              <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-blue-500 text-blue-500' : 'text-gray-700'}`} />
             </button>
           </div>
         </div>
@@ -129,7 +149,7 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
             </div>
             <div className="flex items-center gap-1">
               <Heart className="h-3 w-3" />
-              <span>{formatNumber(model.likeCount)}</span>
+              <span>{formatNumber(likeCount || model.likeCount)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Download className="h-3 w-3" />

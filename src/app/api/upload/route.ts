@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (uploadType === 'code') {
       modelData = {
         file_url: 'threejs-code',
-        thumbnail_url: '/placeholder-code.jpg',
+        thumbnail_url: '/placeholder-code.svg',
         metadata: {
           type: 'threejs-code',
           code: code,
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     } else if (uploadType === 'html') {
       modelData = {
         file_url: 'threejs-html',
-        thumbnail_url: '/placeholder-html.jpg',
+        thumbnail_url: '/placeholder-html.svg',
         metadata: {
           type: 'threejs-html',
           htmlContent: htmlContent
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       
       modelData = {
         file_url: `/models/${fileName}`, // デモ用のURL
-        thumbnail_url: '/placeholder-3d.jpg',
+        thumbnail_url: '/placeholder-3d.svg',
         file_size: fileSize,
         metadata: {
           type: '3d-model',

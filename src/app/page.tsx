@@ -24,16 +24,24 @@ const timeRanges = [
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('trending')
   const [timeRange, setTimeRange] = useState('24h')
-  const [models, setModels] = useState<Model[]>([])
+  const [displayModels, setDisplayModels] = useState<Model[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const storedModels = useStore((state) => state.models)
 
+  // モデルの取得とソート処理
   useEffect(() => {
-    // storeのモデルとモックデータを結合
     setIsLoading(true)
-    setTimeout(() => {
+    
+    // タイマーを使用して状態更新のバッチング
+    const timer = setTimeout(() => {
+      // storeのモデルとモックデータを結合（重複を排除）
       const allModels = [...storedModels, ...mockModels]
-      const sortedModels = [...allModels]
+      const uniqueModels = Array.from(
+        new Map(allModels.map(model => [model.id, model])).values()
+      )
+      
+      // ソート処理
+      const sortedModels = [...uniqueModels]
       
       switch (activeTab) {
         case 'trending':
@@ -56,10 +64,14 @@ export default function HomePage() {
           break
       }
       
-      setModels(sortedModels)
+      setDisplayModels(sortedModels)
       setIsLoading(false)
-    }, 500)
-  }, [activeTab, timeRange, storedModels])
+    }, 100)
+    
+    return () => clearTimeout(timer)
+    // storedModelsは意図的に依存配列から除外（新規アップロード時のみ更新されるため）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, timeRange])
 
   return (
     <div className="p-6">
@@ -142,7 +154,7 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {models.map((model) => (
+            {displayModels.map((model) => (
               <ModelCard key={model.id} model={model} />
             ))}
           </div>

@@ -1,0 +1,44 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#F3F4F6"/>
+  <rect x="40" y="40" width="720" height="520" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2"/>
+  
+  <!-- Browser header -->
+  <rect x="40" y="40" width="720" height="50" rx="8" fill="#F9FAFB"/>
+  <circle cx="70" cy="65" r="6" fill="#EF4444"/>
+  <circle cx="90" cy="65" r="6" fill="#EAB308"/>
+  <circle cx="110" cy="65" r="6" fill="#22C55E"/>
+  
+  <!-- URL bar -->
+  <rect x="150" y="55" width="560" height="20" rx="4" fill="white" stroke="#E5E7EB"/>
+  <rect x="160" y="60" width="80" height="10" rx="2" fill="#D1D5DB"/>
+  
+  <!-- HTML content -->
+  <rect x="80" y="120" width="640" height="40" rx="4" fill="#3B82F6"/>
+  
+  <!-- Navigation -->
+  <rect x="80" y="180" width="100" height="30" rx="4" fill="#E5E7EB"/>
+  <rect x="200" y="180" width="100" height="30" rx="4" fill="#E5E7EB"/>
+  <rect x="320" y="180" width="100" height="30" rx="4" fill="#E5E7EB"/>
+  <rect x="440" y="180" width="100" height="30" rx="4" fill="#E5E7EB"/>
+  
+  <!-- Content blocks -->
+  <rect x="80" y="230" width="300" height="120" rx="4" fill="#F3F4F6"/>
+  <rect x="400" y="230" width="320" height="120" rx="4" fill="#F3F4F6"/>
+  
+  <!-- 3D element placeholder -->
+  <g transform="translate(400, 420)">
+    <circle cx="0" cy="0" r="60" fill="#8B5CF6" opacity="0.3"/>
+    <circle cx="0" cy="0" r="40" fill="#8B5CF6" opacity="0.5"/>
+    <circle cx="0" cy="0" r="20" fill="#8B5CF6" opacity="0.8"/>
+  </g>
+  
+  <!-- HTML5 logo -->
+  <g transform="translate(100, 420)">
+    <path d="M0 0 L5 40 L25 45 L45 40 L50 0 Z" fill="#E34C26"/>
+    <path d="M25 5 L25 40 L40 36 L44 5 Z" fill="#F06529"/>
+    <text x="25" y="25" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" font-weight="bold">5</text>
+  </g>
+  
+  <!-- Text -->
+  <text x="400" y="520" font-family="Arial, sans-serif" font-size="24" fill="#6B7280" text-anchor="middle">HTML Preview</text>
+</svg>
