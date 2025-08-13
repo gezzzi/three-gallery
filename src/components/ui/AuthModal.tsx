@@ -49,8 +49,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
   const handleGoogleSignIn = async () => {
     try {
+      // 現在のページを記憶（ログイン後に戻るため）
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authReturnUrl', window.location.pathname)
+      }
       await signInWithGoogle()
-      onClose()
+      // OAuthの場合はリダイレクトされるため、モーダルは閉じない
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Googleログインに失敗しました'
       setError(errorMessage)

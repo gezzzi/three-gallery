@@ -10,7 +10,7 @@ export const supabaseClient = createClientComponentClient()
 
 // サーバーコンポーネント用
 export async function createServerClient() {
-  const cookieStore = await cookies()
+  await cookies() // cookieStoreは使用していないが、Next.jsのサーバーコンポーネントで必要
   
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {

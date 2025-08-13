@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate } from '@/lib/utils'
-import { MessageCircle, Send, Edit2, Trash2, MoreVertical } from 'lucide-react'
+import { MessageCircle, Send, Edit2, Trash2 } from 'lucide-react'
 
 interface Comment {
   id: string
@@ -38,6 +38,7 @@ export default function CommentSection({ modelId }: CommentSectionProps) {
 
   useEffect(() => {
     fetchComments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelId])
 
   const fetchComments = async () => {

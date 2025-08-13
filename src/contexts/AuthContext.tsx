@@ -29,6 +29,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    // Supabaseが設定されているかチェック
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
+      // Supabase未設定の場合はモックユーザーを使用
+      const mockUser = {
+        id: 'demo-user-001',
+        email: 'demo@example.com',
+        user_metadata: {
+          name: 'デモユーザー',
+          avatar_url: null,
+        },
+      } as unknown as User
+      setUser(mockUser)
+      setLoading(false)
+      return
+    }
+
     // 初回認証状態チェック
     checkUser()
 
@@ -124,10 +143,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
+    // 現在のURLのオリジンを使用（localhost/本番環境に対応）
+    const redirectUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/auth/callback`
+      : process.env.NEXT_PUBLIC_APP_URL 
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+        : 'http://localhost:3000/auth/callback'
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl,
       },
     })
     

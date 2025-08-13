@@ -9,6 +9,7 @@ import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
+import { useStore } from '@/store/useStore'
 
 // 3Dビューアを動的インポート（SSR無効化）
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
@@ -29,16 +30,18 @@ export default function ViewPage() {
   const [isLiked, setIsLiked] = useState(false)
   const [relatedModels, setRelatedModels] = useState<Model[]>([])
   const [activeTab, setActiveTab] = useState('description')
+  const storedModels = useStore((state) => state.models)
 
   useEffect(() => {
-    // モックデータから該当モデルを取得
-    const foundModel = mockModels.find(m => m.id === params.id)
+    // storeとモックデータから該当モデルを取得
+    const allModels = [...storedModels, ...mockModels]
+    const foundModel = allModels.find(m => m.id === params.id)
     if (foundModel) {
       setModel(foundModel)
       // 関連モデルを取得（同じユーザーの他の作品）
-      setRelatedModels(mockModels.filter(m => m.userId === foundModel.userId && m.id !== foundModel.id))
+      setRelatedModels(allModels.filter(m => m.userId === foundModel.userId && m.id !== foundModel.id))
     }
-  }, [params.id])
+  }, [params.id, storedModels])
 
   if (!model) {
     return (
@@ -65,10 +68,15 @@ export default function ViewPage() {
       {/* 3Dビューア */}
       <div className="h-[60vh] bg-gray-900">
         <ModelViewer 
-          modelUrl={model.modelType === 'file' ? model.fileUrl : undefined}
-          code={model.modelType === 'code' ? model.code : undefined}
-          modelType={model.modelType || 'file'}
-          showCodeEditor={model.modelType === 'code'}
+          modelUrl={model.fileUrl === 'threejs-code' || model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
+          code={model.metadata?.code as string | undefined}
+          htmlContent={model.metadata?.htmlContent as string | undefined}
+          modelType={
+            model.metadata?.type === 'threejs-code' ? 'code' : 
+            model.metadata?.type === 'threejs-html' ? 'html' : 
+            'file'
+          }
+          showCodeEditor={model.metadata?.type === 'threejs-code'}
         />
       </div>
 

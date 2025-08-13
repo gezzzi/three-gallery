@@ -76,7 +76,8 @@ export const useStore = create<StoreState>()(
       name: 'three-gallery-storage',
       partialize: (state) => ({
         currentUser: state.currentUser,
-        isSidebarOpen: state.isSidebarOpen
+        isSidebarOpen: state.isSidebarOpen,
+        models: state.models // モデルも永続化
       })
     }
   )

@@ -11,6 +11,7 @@ export function useFollow(targetUserId: string) {
     if (user && targetUserId) {
       checkFollowStatus()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, targetUserId])
 
   const checkFollowStatus = async () => {

@@ -67,6 +67,7 @@ const SANDBOX_HTML = `
     // Three.js基本セットアップ
     let scene, camera, renderer, controls;
     let animationId;
+    let userAnimate = null; // ユーザー定義のアニメーション関数
 
     function initThree() {
       // シーン作成
@@ -166,9 +167,16 @@ const SANDBOX_HTML = `
         });
         toRemove.forEach(child => scene.remove(child));
         
-        // ユーザーコードを実行
-        const userFunction = new Function('scene', 'camera', 'renderer', 'THREE', code);
-        userFunction(scene, camera, renderer, THREE);
+        // ユーザーアニメーション関数をリセット
+        userAnimate = null;
+        
+        // ユーザーコードを実行（userAnimateをグローバルに定義できるようにする）
+        const wrappedCode = \`
+          (function() {
+            \${code}
+          })();
+        \`;
+        eval(wrappedCode);
         
         // アニメーション再開
         animate();

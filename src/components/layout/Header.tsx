@@ -2,14 +2,21 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Menu, Search, Upload, Bell, User } from 'lucide-react'
+import { Menu, Search, Upload, Bell, User, LogOut, Settings, Bookmark } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import dynamic from 'next/dynamic'
+
+const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
 
 export default function Header() {
   const router = useRouter()
-  const { toggleSidebar, searchQuery, setSearchQuery, currentUser } = useStore()
+  const { toggleSidebar, searchQuery, setSearchQuery } = useStore()
+  const { user, signOut, loading } = useAuth()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,31 +77,85 @@ export default function Header() {
           <Bell className="h-5 w-5" />
         </button>
 
-        {currentUser ? (
-          <Link href={`/user/${currentUser.username}`}>
-            <div className="h-8 w-8 rounded-full bg-gray-300">
-              {currentUser.avatarUrl ? (
-                <img
-                  src={currentUser.avatarUrl}
-                  alt={currentUser.username}
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white">
-                  {currentUser.username[0].toUpperCase()}
+        {!loading && (
+          user ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="h-8 w-8 rounded-full bg-gray-300 hover:ring-2 hover:ring-blue-500 transition-all"
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="ユーザー"
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white text-sm font-medium">
+                    {user.email?.[0].toUpperCase()}
+                  </div>
+                )}
+              </button>
+              
+              {/* ユーザーメニュードロップダウン */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg border">
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    プロフィール
+                  </Link>
+                  <Link
+                    href="/bookmarks"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <Bookmark className="h-4 w-4" />
+                    ブックマーク
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    設定
+                  </Link>
+                  <hr className="my-2" />
+                  <button
+                    onClick={() => {
+                      signOut()
+                      setShowUserMenu(false)
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    ログアウト
+                  </button>
                 </div>
               )}
             </div>
-          </Link>
-        ) : (
-          <button
-            className="rounded-lg p-2 hover:bg-gray-100"
-            aria-label="ユーザーメニュー"
-          >
-            <User className="h-5 w-5" />
-          </button>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              ログイン
+            </button>
+          )
         )}
       </div>
+      
+      {/* 認証モーダル */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </header>
   )
 }

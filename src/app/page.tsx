@@ -5,6 +5,7 @@ import ModelCard from '@/components/ui/ModelCard'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { TrendingUp, Clock, Star, Download } from 'lucide-react'
+import { useStore } from '@/store/useStore'
 
 const tabs = [
   { id: 'trending', label: 'トレンド', icon: TrendingUp },
@@ -25,12 +26,14 @@ export default function HomePage() {
   const [timeRange, setTimeRange] = useState('24h')
   const [models, setModels] = useState<Model[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const storedModels = useStore((state) => state.models)
 
   useEffect(() => {
-    // モックデータを使用（将来的にはSupabaseから取得）
+    // storeのモデルとモックデータを結合
     setIsLoading(true)
     setTimeout(() => {
-      const sortedModels = [...mockModels]
+      const allModels = [...storedModels, ...mockModels]
+      const sortedModels = [...allModels]
       
       switch (activeTab) {
         case 'trending':
@@ -56,7 +59,7 @@ export default function HomePage() {
       setModels(sortedModels)
       setIsLoading(false)
     }, 500)
-  }, [activeTab, timeRange])
+  }, [activeTab, timeRange, storedModels])
 
   return (
     <div className="p-6">

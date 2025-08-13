@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import LayoutClient from "@/components/layout/LayoutClient";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -20,11 +21,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="light">
-      <body className={`${notoSansJP.variable} font-sans antialiased light`}>
-        <LayoutClient>
-          {children}
-        </LayoutClient>
+    <html lang="ja" className="light" suppressHydrationWarning>
+      <head>
+        <meta name="darkreader-lock" />
+      </head>
+      <body className={`${notoSansJP.variable} font-sans antialiased light`} suppressHydrationWarning>
+        <AuthProvider>
+          <LayoutClient>
+            {children}
+          </LayoutClient>
+        </AuthProvider>
       </body>
     </html>
   );

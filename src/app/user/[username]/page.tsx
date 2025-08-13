@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import ModelCard from '@/components/ui/ModelCard'
 import { mockModels, mockUsers } from '@/lib/mockData'
 import { Model, User } from '@/types'
@@ -10,14 +9,11 @@ import { formatNumber, formatDate } from '@/lib/utils'
 import { 
   User as UserIcon, 
   Calendar, 
-  MapPin, 
   Link as LinkIcon,
   Twitter,
-  Settings,
   Grid,
   Heart,
   Bookmark,
-  Users
 } from 'lucide-react'
 
 const tabs = [

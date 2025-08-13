@@ -6,14 +6,17 @@ import { OrbitControls, Stage, Grid, useGLTF, Html, PerspectiveCamera } from '@r
 import { ErrorBoundary } from 'react-error-boundary'
 import * as THREE from 'three'
 import dynamic from 'next/dynamic'
+import { Maximize, Minimize } from 'lucide-react'
 
 const CodeSandbox = dynamic(() => import('./CodeSandbox'), { ssr: false })
 const CodeEditor = dynamic(() => import('../ui/CodeEditor'), { ssr: false })
+const HtmlPreview = dynamic(() => import('./HtmlPreview'), { ssr: false })
 
 interface ModelViewerProps {
   modelUrl?: string
   code?: string
-  modelType?: 'file' | 'code'
+  htmlContent?: string
+  modelType?: 'file' | 'code' | 'html'
   autoRotate?: boolean
   showGrid?: boolean
   showCodeEditor?: boolean
@@ -74,6 +77,7 @@ function ErrorFallback({ error }: { error?: Error }) {
 export default function ModelViewer({ 
   modelUrl, 
   code,
+  htmlContent,
   modelType = 'file',
   autoRotate = true, 
   showGrid = true,
@@ -85,6 +89,8 @@ export default function ModelViewer({
   const [, setIsLoading] = useState(true)
   const [currentCode, setCurrentCode] = useState(code || '')
   const [showEditor, setShowEditor] = useState(showCodeEditor)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleLoad = () => {
     setIsLoading(false)
@@ -97,10 +103,60 @@ export default function ModelViewer({
     onError?.(err)
   }
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+      }).catch((err) => {
+        console.error('Error attempting to enable fullscreen:', err)
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false)
+      }).catch((err) => {
+        console.error('Error attempting to exit fullscreen:', err)
+      })
+    }
+  }
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  // HTMLタイプの場合
+  if (modelType === 'html' && htmlContent) {
+    return (
+      <div ref={containerRef} className="relative h-full w-full bg-gray-100">
+        <HtmlPreview htmlContent={htmlContent} height="100%" />
+        
+        {/* フルスクリーンボタン */}
+        <div className="absolute bottom-4 left-4 z-10">
+          <button
+            className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? (
+              <><Minimize className="h-4 w-4" /> 終了</>
+            ) : (
+              <><Maximize className="h-4 w-4" /> フルスクリーン</>
+            )}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // コード実行タイプの場合
   if (modelType === 'code' && code) {
     return (
-      <div className="relative h-full w-full">
+      <div ref={containerRef} className="relative h-full w-full">
         {showEditor ? (
           <div className="flex h-full flex-col lg:flex-row">
             <div className="h-1/2 lg:h-full lg:w-1/2">
@@ -128,6 +184,16 @@ export default function ModelViewer({
           >
             {showEditor ? 'プレビューのみ' : 'エディタを表示'}
           </button>
+          <button
+            className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? (
+              <><Minimize className="h-4 w-4" /> 終了</>
+            ) : (
+              <><Maximize className="h-4 w-4" /> フルスクリーン</>
+            )}
+          </button>
         </div>
       </div>
     )
@@ -143,7 +209,7 @@ export default function ModelViewer({
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div ref={containerRef} className="relative h-full w-full">
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[0, 2, 5]} />
         <ErrorBoundary
@@ -195,10 +261,14 @@ export default function ModelViewer({
       {/* コントロールUI */}
       <div className="absolute bottom-4 left-4 flex gap-2">
         <button
-          className="rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
-          onClick={() => {/* フルスクリーン実装 */}}
+          className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+          onClick={toggleFullscreen}
         >
-          フルスクリーン
+          {isFullscreen ? (
+            <><Minimize className="h-4 w-4" /> 終了</>
+          ) : (
+            <><Maximize className="h-4 w-4" /> フルスクリーン</>
+          )}
         </button>
       </div>
     </div>
