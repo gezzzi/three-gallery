@@ -11,13 +11,16 @@ export async function POST(request: NextRequest) {
     const tags = formData.get('tags') as string
     const license = formData.get('license') as string
     const isCommercialOk = formData.get('isCommercialOk') === 'true'
-    const isFree = formData.get('isFree') === 'true'
-    const price = parseFloat(formData.get('price') as string) || 0
     const status = formData.get('status') as string
     const code = formData.get('code') as string
     const template = formData.get('template') as string
     const htmlContent = formData.get('htmlContent') as string
     const modelFile = formData.get('modelFile') as File
+    
+    // 音楽関連のデータを取得
+    const musicType = formData.get('musicType') as string
+    const musicFile = formData.get('musicFile') as File | null
+    const selectedBgmId = formData.get('selectedBgmId') as string
     
     // UUID形式のデモユーザーIDを使用
     const userId = formData.get('userId') as string || '00000000-0000-0000-0000-000000000001'
@@ -49,6 +52,9 @@ export async function POST(request: NextRequest) {
         htmlContent?: string
         fileName?: string
         fileSize?: number
+        music_url?: string
+        music_type?: string
+        music_name?: string
       }
     }
     
@@ -91,6 +97,25 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+    
+    // 音楽ファイルの処理（metadataに保存）
+    if (musicType === 'upload' && musicFile) {
+      // アップロードされた音楽ファイルの処理
+      // 通常はストレージにURLをアップロードしてURLを取得しますが、
+      // ここではデモ用にローカルのURLを使用します
+      const musicFileName = musicFile.name
+      if (modelData) {
+        modelData.metadata.music_url = `/music/${musicFileName}` // デモ用のURL
+        modelData.metadata.music_type = 'upload'
+        modelData.metadata.music_name = musicFileName.replace(/\.[^/.]+$/, '') // 拡張子を除去
+      }
+    } else if (musicType === 'default' && selectedBgmId) {
+      // デフォルトBGMの使用
+      if (modelData) {
+        modelData.metadata.music_url = selectedBgmId // BGMのIDを保存
+        modelData.metadata.music_type = 'default'
+      }
+    }
 
     // データベースに保存
     const { data: model, error: dbError } = await supabase
@@ -102,8 +127,6 @@ export async function POST(request: NextRequest) {
         tags: tagsArray,
         license_type: license,
         is_commercial_ok: isCommercialOk,
-        is_free: isFree,
-        price: isFree ? 0 : price,
         status,
         ...modelData
       })

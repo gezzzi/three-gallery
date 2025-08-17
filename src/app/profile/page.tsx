@@ -299,13 +299,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-3 sm:p-6">
       {/* プロフィールヘッダー */}
-      <div className="mb-8 rounded-lg bg-white p-6">
-        <div className="flex items-start gap-6">
+      <div className="mb-4 sm:mb-8 rounded-lg bg-white p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           {/* アバター */}
           <div className="relative">
-            <div className="h-24 w-24 rounded-full bg-gray-300">
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gray-300">
               {profile?.avatar_url || user.user_metadata?.avatar_url ? (
                 <img
                   src={profile?.avatar_url || user.user_metadata?.avatar_url}
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                   className="h-full w-full rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white text-3xl font-medium">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white text-2xl sm:text-3xl font-medium">
                   {(profile?.display_name || user.email)?.[0].toUpperCase()}
                 </div>
               )}
@@ -326,16 +326,16 @@ export default function ProfilePage() {
           </div>
 
           {/* プロフィール情報 */}
-          <div className="flex-1">
+          <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
             {isEditing ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium">ユーザー名</label>
                   <input
                     type="text"
                     value={editForm.username}
                     onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
                     placeholder="username"
                   />
                 </div>
@@ -345,7 +345,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.display_name}
                     onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
                     placeholder="表示名"
                   />
                 </div>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
                     rows={3}
                     placeholder="自己紹介を入力..."
                   />
@@ -365,35 +365,35 @@ export default function ProfilePage() {
                     type="url"
                     value={editForm.website}
                     onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
                     placeholder="https://example.com"
                   />
                 </div>
               </div>
             ) : (
               <div>
-                <h1 className="text-2xl font-bold">{profile?.display_name || 'ユーザー'}</h1>
-                <p className="text-gray-600">@{profile?.username || 'username'}</p>
+                <h1 className="text-xl sm:text-2xl font-bold">{profile?.display_name || 'ユーザー'}</h1>
+                <p className="text-sm sm:text-base text-gray-600">@{profile?.username || 'username'}</p>
                 {profile?.bio && (
-                  <p className="mt-3 text-gray-700">{profile.bio}</p>
+                  <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-700">{profile.bio}</p>
                 )}
                 {profile?.website && (
                   <a
                     href={profile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-block text-blue-600 hover:underline"
+                    className="mt-2 inline-block text-sm sm:text-base text-blue-600 hover:underline"
                   >
                     {profile.website}
                   </a>
                 )}
-                <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                   <div className="flex items-center gap-1">
-                    <Mail className="h-4 w-4" />
-                    {user.email}
+                    <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="truncate max-w-[200px] sm:max-w-none">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                     {profile?.created_at ? formatDate(profile.created_at) : '登録日不明'}
                   </div>
                 </div>
@@ -402,35 +402,35 @@ export default function ProfilePage() {
           </div>
 
           {/* 編集ボタン */}
-          <div>
+          <div className="mt-4 sm:mt-0">
             {isEditing ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center sm:justify-start">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                  className="flex items-center gap-1 sm:gap-2 rounded-lg bg-blue-600 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
                 >
                   {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <Save className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
                   保存
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 rounded-lg border px-4 py-2 font-medium hover:bg-gray-50"
+                  className="flex items-center gap-1 sm:gap-2 rounded-lg border px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-50"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   キャンセル
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 rounded-lg border px-4 py-2 font-medium hover:bg-gray-50"
+                className="flex items-center gap-1 sm:gap-2 rounded-lg border px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-50"
               >
-                <Edit2 className="h-4 w-4" />
+                <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 編集
               </button>
             )}
@@ -439,18 +439,18 @@ export default function ProfilePage() {
       </div>
 
       {/* タブ */}
-      <div className="mb-6 border-b">
-        <nav className="flex gap-6">
-          <button className="border-b-2 border-blue-600 pb-3 font-medium text-blue-600">
+      <div className="mb-4 sm:mb-6 border-b overflow-x-auto">
+        <nav className="flex gap-4 sm:gap-6 min-w-max">
+          <button className="border-b-2 border-blue-600 pb-2 sm:pb-3 text-sm sm:text-base font-medium text-blue-600 whitespace-nowrap">
             アップロード ({userModels.length})
           </button>
-          <button className="pb-3 font-medium text-gray-600 hover:text-gray-900">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
             いいね
           </button>
-          <button className="pb-3 font-medium text-gray-600 hover:text-gray-900">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
             フォロー中
           </button>
-          <button className="pb-3 font-medium text-gray-600 hover:text-gray-900">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
             フォロワー
           </button>
         </nav>
@@ -459,7 +459,7 @@ export default function ProfilePage() {
       {/* モデル一覧 */}
       <div>
         {userModels.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {userModels.map((model) => (
               <ModelCard key={model.id} model={model} showUser={false} />
             ))}

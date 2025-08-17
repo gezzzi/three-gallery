@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Info, Tag, DollarSign, Lock, LogIn } from 'lucide-react'
+import { Info, Tag, Lock, LogIn, Music, Play, Pause, ChevronDown, ChevronUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { Model } from '@/types'
+import { defaultBGMs } from '@/lib/defaultBgm'
 
 const CodeEditor = dynamic(() => import('@/components/ui/CodeEditor'), { ssr: false })
 const CodeSandbox = dynamic(() => import('@/components/3d/CodeSandbox'), { ssr: false })
@@ -122,11 +123,14 @@ export default function UploadPage() {
     tags: '',
     license: 'CC BY',
     isCommercialOk: true,
-    isFree: true,
-    price: 0,
     status: 'public' as 'public' | 'private',
   })
   const [isUploading, setIsUploading] = useState(false)
+  const [musicFile, setMusicFile] = useState<File | null>(null)
+  const [musicType, setMusicType] = useState<'upload' | 'default'>('default')
+  const [selectedBgmId, setSelectedBgmId] = useState<string>('ambient-1')
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null)
+  const [isBgmListOpen, setIsBgmListOpen] = useState(false)
 
   const handleTemplateChange = (template: string) => {
     setSelectedTemplate(template)
@@ -156,13 +160,61 @@ export default function UploadPage() {
     }
   }
 
+  const handleMusicFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const validTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4']
+      if (validTypes.includes(file.type) || file.name.match(/\.(mp3|wav|ogg|m4a)$/i)) {
+        if (file.size > 10 * 1024 * 1024) { // 10MB制限
+          alert('音楽ファイルは10MB以下にしてください')
+          return
+        }
+        setMusicFile(file)
+      } else {
+        alert('MP3、WAV、OGG、またはM4A形式のファイルをアップロードしてください')
+      }
+    }
+  }
+
+  const handleBgmPreview = (bgmId: string) => {
+    // 既存のプレビューを停止
+    if (previewAudio) {
+      previewAudio.pause()
+      previewAudio.currentTime = 0
+    }
+
+    const bgm = defaultBGMs.find(b => b.id === bgmId)
+    if (!bgm) return
+
+    const audio = new Audio(bgm.url)
+    audio.volume = 0.3
+    audio.play().catch(err => {
+      console.error('BGM preview playback failed:', err)
+    })
+    
+    setPreviewAudio(audio)
+  }
+
+  const stopBgmPreview = () => {
+    if (previewAudio) {
+      previewAudio.pause()
+      previewAudio.currentTime = 0
+      setPreviewAudio(null)
+    }
+  }
+
   useEffect(() => {
     return () => {
       if (modelUrl) {
         URL.revokeObjectURL(modelUrl)
       }
+      // クリーンアップ時にプレビュー音声を停止
+      if (previewAudio) {
+        previewAudio.pause()
+        previewAudio.currentTime = 0
+      }
     }
-  }, [modelUrl])
+  }, [modelUrl, previewAudio])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,9 +232,15 @@ export default function UploadPage() {
       data.append('tags', formData.tags)
       data.append('license', formData.license)
       data.append('isCommercialOk', formData.isCommercialOk.toString())
-      data.append('isFree', formData.isFree.toString())
-      data.append('price', formData.price.toString())
       data.append('status', formData.status)
+      
+      // 音楽関連のデータを追加
+      data.append('musicType', musicType)
+      if (musicType === 'upload' && musicFile) {
+        data.append('musicFile', musicFile)
+      } else if (musicType === 'default') {
+        data.append('selectedBgmId', selectedBgmId)
+      }
       
       if (uploadType === 'code') {
         data.append('code', code)
@@ -229,9 +287,6 @@ export default function UploadPage() {
             animationDuration: result.model.animation_duration || 0,
             licenseType: result.model.license_type || 'CC BY',
             isCommercialOk: result.model.is_commercial_ok !== false,
-            price: result.model.price || 0,
-            currency: result.model.currency || 'JPY',
-            isFree: result.model.is_free !== false,
             viewCount: 0,
             downloadCount: 0,
             likeCount: 0,
@@ -299,13 +354,13 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-8 text-3xl font-bold">Three.jsコンテンツをアップロード</h1>
+    <div className="mx-auto max-w-6xl p-3 sm:p-6">
+      <h1 className="mb-4 sm:mb-8 text-xl sm:text-3xl font-bold">Three.jsコンテンツをアップロード</h1>
 
       {/* アップロードタイプ選択 */}
-      <div className="mb-6 rounded-lg bg-white p-4">
+      <div className="mb-4 sm:mb-6 rounded-lg bg-white p-3 sm:p-4">
         <label className="mb-2 block text-sm font-medium">アップロードタイプ</label>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <label className="flex items-center gap-2">
             <input
               type="radio"
@@ -314,7 +369,7 @@ export default function UploadPage() {
               onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
               className="h-4 w-4"
             />
-            <span>Three.jsコード</span>
+            <span className="text-sm sm:text-base">Three.jsコード</span>
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -324,7 +379,7 @@ export default function UploadPage() {
               onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
               className="h-4 w-4"
             />
-            <span>HTMLファイル</span>
+            <span className="text-sm sm:text-base">HTMLファイル</span>
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -334,7 +389,7 @@ export default function UploadPage() {
               onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
               className="h-4 w-4"
             />
-            <span>3Dモデル (GLB/GLTF)</span>
+            <span className="text-sm sm:text-base">3Dモデル (GLB/GLTF)</span>
           </label>
         </div>
       </div>
@@ -457,9 +512,9 @@ export default function UploadPage() {
         )}
 
         {/* 基本情報 */}
-        <div className="space-y-4 rounded-lg bg-white p-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Info className="h-5 w-5" />
+        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5" />
             基本情報
           </h2>
           
@@ -503,8 +558,8 @@ export default function UploadPage() {
         </div>
 
         {/* ライセンス設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-6">
-          <h2 className="text-lg font-semibold">ライセンス設定</h2>
+        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold">ライセンス設定</h2>
           
           <div>
             <label className="mb-2 block text-sm font-medium">ライセンス</label>
@@ -535,53 +590,150 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 価格設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <DollarSign className="h-5 w-5" />
-            価格設定
+        {/* BGM設定 */}
+        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <Music className="h-4 w-4 sm:h-5 sm:w-5" />
+            BGM設定
           </h2>
           
+          {/* BGMタイプ選択 */}
           <div className="flex gap-4">
             <label className="flex items-center gap-2">
               <input
                 type="radio"
-                checked={formData.isFree}
-                onChange={() => setFormData({ ...formData, isFree: true, price: 0 })}
+                value="default"
+                checked={musicType === 'default'}
+                onChange={() => setMusicType('default')}
                 className="h-4 w-4"
               />
-              <span>無料</span>
+              <span>デフォルトBGMから選択</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="radio"
-                checked={!formData.isFree}
-                onChange={() => setFormData({ ...formData, isFree: false })}
+                value="upload"
+                checked={musicType === 'upload'}
+                onChange={() => setMusicType('upload')}
                 className="h-4 w-4"
               />
-              <span>有料</span>
+              <span>BGMをアップロード</span>
             </label>
           </div>
 
-          {!formData.isFree && (
-            <div className="flex items-center gap-2">
-              <span className="text-lg">¥</span>
+          {/* デフォルトBGM選択 */}
+          {musicType === 'default' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium">BGMを選択</label>
+              
+              {/* 選択中のBGM表示とドロップダウントグル */}
+              <div 
+                className="flex items-center justify-between rounded-lg border border-gray-300 bg-gray-50 p-3 cursor-pointer hover:bg-gray-100"
+                onClick={() => setIsBgmListOpen(!isBgmListOpen)}
+              >
+                <div className="flex items-center gap-3">
+                  <Music className="h-4 w-4 text-gray-600" />
+                  <div>
+                    <div className="font-medium">
+                      {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.name || 'BGMを選択'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.genre}
+                    </div>
+                  </div>
+                </div>
+                {isBgmListOpen ? (
+                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                )}
+              </div>
+
+              {/* BGMリスト（折りたたみ可能） */}
+              {isBgmListOpen && (
+                <div className="space-y-1 rounded-lg border border-gray-200 bg-white p-2 max-h-64 overflow-y-auto">
+                  {defaultBGMs.map((bgm) => (
+                    <div
+                      key={bgm.id}
+                      className={`flex items-center justify-between rounded-md p-2 transition-colors cursor-pointer ${
+                        selectedBgmId === bgm.id
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => {
+                        setSelectedBgmId(bgm.id)
+                        setIsBgmListOpen(false)
+                        stopBgmPreview()
+                      }}
+                    >
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">
+                          {bgm.name}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {bgm.genre}
+                          {bgm.description && ` - ${bgm.description}`}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (previewAudio && selectedBgmId === bgm.id) {
+                            stopBgmPreview()
+                          } else {
+                            setSelectedBgmId(bgm.id)
+                            handleBgmPreview(bgm.id)
+                          }
+                        }}
+                        className="ml-2 rounded-full p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        title="試聴"
+                      >
+                        {previewAudio && selectedBgmId === bgm.id ? (
+                          <Pause className="h-3 w-3" />
+                        ) : (
+                          <Play className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* 選択中のBGMの説明 */}
+              {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.description && (
+                <p className="text-sm text-gray-600 italic">
+                  {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.description}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* BGMアップロード */}
+          {musicType === 'upload' && (
+            <div>
+              <label className="mb-2 block text-sm font-medium">
+                音楽ファイル (MP3, WAV, OGG, M4A - 最大10MB)
+              </label>
               <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                className="w-32 rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
-                min="100"
-                step="100"
+                type="file"
+                accept=".mp3,.wav,.ogg,.m4a,audio/*"
+                onChange={handleMusicFileUpload}
+                className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
               />
+              {musicFile && (
+                <p className="mt-2 text-sm text-gray-600">
+                  ファイル: {musicFile.name} ({(musicFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
             </div>
           )}
         </div>
 
         {/* 公開設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Lock className="h-5 w-5" />
+        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
             公開設定
           </h2>
           

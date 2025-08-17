@@ -35,9 +35,20 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen } = useStore()
   const [isClient, setIsClient] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
+    
+    // モバイル判定
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   // 初回レンダリング時はデフォルト値を使用してHydrationエラーを防ぐ
@@ -45,7 +56,9 @@ export default function Sidebar() {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-16 h-[calc(100vh-64px)] w-64 overflow-y-auto border-r bg-white transition-transform duration-300",
+      "fixed left-0 top-16 h-[calc(100vh-64px)] overflow-y-auto border-r bg-white transition-transform duration-300",
+      // モバイルではドロワーとして動作
+      isMobile ? "w-64 z-40" : "w-64",
       sidebarState ? "translate-x-0" : "-translate-x-full"
     )}>
       {/* メインメニュー */}

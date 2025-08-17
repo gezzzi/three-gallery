@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Flag, Eye, Calendar, Tag, DollarSign, Bookmark } from 'lucide-react'
+import { Heart, Download, Share2, Flag, Eye, Calendar, Tag, Bookmark } from 'lucide-react'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
@@ -12,6 +12,7 @@ import ModelCard from '@/components/ui/ModelCard'
 import { useStore } from '@/store/useStore'
 import { useBookmark } from '@/hooks/useBookmark'
 import { useLike } from '@/hooks/useLike'
+import { getDefaultBGM } from '@/lib/defaultBgm'
 
 // 3Dビューアを動的インポート（SSR無効化）
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
@@ -26,11 +27,19 @@ const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
   ),
 })
 
+// 音楽プレイヤーを動的インポート
+const MusicPlayer = dynamic(() => import('@/components/ui/MusicPlayer'), {
+  ssr: false,
+})
+
 export default function ViewPage() {
   const params = useParams()
   const [model, setModel] = useState<Model | null>(null)
   const [relatedModels, setRelatedModels] = useState<Model[]>([])
   const [activeTab, setActiveTab] = useState('description')
+  const [musicUrl, setMusicUrl] = useState<string | undefined>()
+  const [musicName, setMusicName] = useState<string>('無題の曲')
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const storedModels = useStore((state) => state.models)
   const addToHistory = useStore((state) => state.addToHistory)
   const { isBookmarked, toggleBookmark } = useBookmark(params.id as string)
@@ -46,8 +55,42 @@ export default function ViewPage() {
       setRelatedModels(allModels.filter(m => m.userId === foundModel.userId && m.id !== foundModel.id))
       // 閲覧履歴に追加
       addToHistory(foundModel.id)
+      
+      // 音楽のURLを設定（metadataから取得）
+      const metadata = foundModel.metadata as Record<string, unknown>
+      if (metadata?.music_type === 'default' && metadata?.music_url) {
+        const bgm = getDefaultBGM(metadata.music_url as string)
+        if (bgm) {
+          setMusicUrl(bgm.url)
+          setMusicName(bgm.name)
+        }
+      } else if (metadata?.music_type === 'upload' && metadata?.music_url) {
+        setMusicUrl(metadata.music_url as string)
+        setMusicName((metadata.music_name as string) || 'アップロードされたBGM')
+      } else if (foundModel.musicType === 'default' && foundModel.musicUrl) {
+        // 旧形式のサポート（互換性のため）
+        const bgm = getDefaultBGM(foundModel.musicUrl)
+        if (bgm) {
+          setMusicUrl(bgm.url)
+          setMusicName(bgm.name)
+        }
+      } else if (foundModel.musicType === 'upload' && foundModel.musicUrl) {
+        setMusicUrl(foundModel.musicUrl)
+        setMusicName(foundModel.musicName || 'アップロードされたBGM')
+      }
     }
   }, [params.id, storedModels, addToHistory])
+
+  // ページ遷移時に前の音楽を停止
+  useEffect(() => {
+    return () => {
+      // このページを離れる時に音楽を停止
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause()
+        currentAudioRef.current = null
+      }
+    }
+  }, [params.id])
 
   if (!model) {
     return (
@@ -60,19 +103,14 @@ export default function ViewPage() {
   }
 
   const handleDownload = () => {
-    if (model.isFree) {
-      // 無料ダウンロード処理
-      window.open(model.fileUrl, '_blank')
-    } else {
-      // 有料ダウンロード処理（Stripe決済へ）
-      alert('決済機能は準備中です')
-    }
+    // ダウンロード処理
+    window.open(model.fileUrl, '_blank')
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 3Dビューア */}
-      <div className="h-[60vh] bg-gray-900">
+      <div className="h-[60vh] bg-gray-900 relative">
         <ModelViewer 
           modelUrl={model.fileUrl === 'threejs-code' || model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
           code={model.metadata?.code as string | undefined}
@@ -84,6 +122,25 @@ export default function ViewPage() {
           }
           showCodeEditor={model.metadata?.type === 'threejs-code'}
         />
+        
+        {/* 音楽プレイヤー */}
+        {musicUrl && (
+          <div className="absolute bottom-4 right-4 z-20">
+            <MusicPlayer
+              musicUrl={musicUrl}
+              musicName={musicName}
+              onPlay={() => {
+                // 他の音楽を停止
+                const audios = document.querySelectorAll('audio')
+                audios.forEach(audio => {
+                  if (audio !== currentAudioRef.current) {
+                    audio.pause()
+                  }
+                })
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
@@ -297,28 +354,13 @@ export default function ViewPage() {
             <div className="rounded-lg bg-white p-6">
               <h3 className="mb-4 font-semibold">ダウンロード</h3>
               
-              {model.isFree ? (
-                <button
-                  onClick={handleDownload}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white hover:bg-green-700"
-                >
-                  <Download className="h-5 w-5" />
-                  無料ダウンロード
-                </button>
-              ) : (
-                <div>
-                  <div className="mb-4 text-center">
-                    <span className="text-3xl font-bold">¥{model.price.toLocaleString()}</span>
-                  </div>
-                  <button
-                    onClick={handleDownload}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700"
-                  >
-                    <DollarSign className="h-5 w-5" />
-                    購入してダウンロード
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleDownload}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white hover:bg-green-700"
+              >
+                <Download className="h-5 w-5" />
+                ダウンロード
+              </button>
               
               <div className="mt-4 space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">

@@ -43,7 +43,6 @@ function SearchContent() {
   const [filters, setFilters] = useState({
     category: initialTag || 'すべて',
     hasAnimation: 'all' as 'all' | 'yes' | 'no',
-    priceRange: 'all' as 'all' | 'free' | 'paid',
     license: 'all',
     sortBy: 'relevance' as 'relevance' | 'newest' | 'popular' | 'downloads',
   })
@@ -78,12 +77,12 @@ function SearchContent() {
         filtered = filtered.filter(model => !model.hasAnimation)
       }
       
-      // 価格フィルタ
-      if (filters.priceRange === 'free') {
-        filtered = filtered.filter(model => model.isFree)
-      } else if (filters.priceRange === 'paid') {
-        filtered = filtered.filter(model => !model.isFree)
-      }
+      // 価格フィルタ（料金機能削除のため無効化）
+      // if (filters.priceRange === 'free') {
+      //   filtered = filtered.filter(model => model.isFree)
+      // } else if (filters.priceRange === 'paid') {
+      //   filtered = filtered.filter(model => !model.isFree)
+      // }
       
       // ライセンスフィルタ
       if (filters.license !== 'all') {
@@ -199,19 +198,6 @@ function SearchContent() {
               </select>
             </div>
 
-            {/* 価格 */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">価格</label>
-              <select
-                value={filters.priceRange}
-                onChange={(e) => setFilters({ ...filters, priceRange: e.target.value as 'all' | 'free' | 'paid' })}
-                className="w-full rounded-lg border px-3 py-2"
-              >
-                <option value="all">すべて</option>
-                <option value="free">無料</option>
-                <option value="paid">有料</option>
-              </select>
-            </div>
 
             {/* ライセンス */}
             <div>
@@ -260,15 +246,6 @@ function SearchContent() {
                 className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
               >
                 アニメーション: {filters.hasAnimation === 'yes' ? 'あり' : 'なし'}
-                <X className="h-3 w-3" />
-              </button>
-            )}
-            {filters.priceRange !== 'all' && (
-              <button
-                onClick={() => clearFilter('priceRange')}
-                className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
-              >
-                {filters.priceRange === 'free' ? '無料' : '有料'}
                 <X className="h-3 w-3" />
               </button>
             )}

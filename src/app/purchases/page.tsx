@@ -39,9 +39,9 @@ export default function PurchasesPage() {
         new Map(allModels.map(model => [model.id, model])).values()
       )
       
-      // 購入済みモデルのみをフィルタリング（有料モデルのみ）
+      // 購入済みモデルのみをフィルタリング
       const purchased = uniqueModels.filter(model => 
-        purchasedModels.includes(model.id) && !model.isFree
+        purchasedModels.includes(model.id)
       )
       
       // 購入日時順にソート（デモのため作成日でソート）
@@ -135,9 +135,9 @@ export default function PurchasesPage() {
           <div className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-90">総額</p>
+                <p className="text-sm opacity-90">ダウンロード済み</p>
                 <p className="text-3xl font-bold mt-1">
-                  ¥{purchasedModelsData.reduce((sum, model) => sum + model.price, 0).toLocaleString()}
+                  {purchasedModelsData.length}
                 </p>
               </div>
               <ShoppingBag className="h-8 w-8 opacity-50" />

@@ -17,6 +17,7 @@ export default function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   // 外側クリックでメニューを閉じる
@@ -44,27 +45,27 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-white px-4 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-16 items-center gap-2 sm:gap-4 border-b bg-white px-2 sm:px-4 shadow-sm">
       {/* ロゴとメニュー */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <button
           onClick={toggleSidebar}
-          className="rounded-lg p-2 hover:bg-gray-100"
+          className="rounded-lg p-1.5 sm:p-2 hover:bg-gray-100"
           aria-label="メニュー"
         >
           <Menu className="h-5 w-5" />
         </button>
         <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
-          <span className="text-xl font-bold">ThreeGallery</span>
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
+          <span className="hidden sm:inline text-xl font-bold">ThreeGallery</span>
         </Link>
       </div>
 
-      {/* 検索バー */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+      {/* デスクトップ検索バー */}
+      <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
         <div className={`relative flex items-center rounded-full border ${
           isSearchFocused ? 'border-blue-500' : 'border-gray-300'
-        } bg-gray-50 px-4 py-2 transition-colors`}>
+        } bg-gray-50 px-4 py-2 transition-colors w-full`}>
           <Search className="h-5 w-5 text-gray-400" />
           <input
             type="text"
@@ -78,21 +79,30 @@ export default function Header() {
         </div>
       </form>
 
+      {/* モバイル検索ボタン */}
+      <button
+        onClick={() => setShowMobileSearch(!showMobileSearch)}
+        className="md:hidden rounded-lg p-2 hover:bg-gray-100"
+        aria-label="検索"
+      >
+        <Search className="h-5 w-5" />
+      </button>
+
       {/* 右側のアクション */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 ml-auto">
         <Link
           href="/upload"
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-1 sm:gap-2 rounded-lg bg-blue-600 px-2 sm:px-4 py-1.5 sm:py-2 font-medium text-white hover:bg-blue-700 transition-colors text-sm sm:text-base"
         >
           <Upload className="h-4 w-4" />
           <span className="hidden sm:inline">アップロード</span>
         </Link>
 
         <button
-          className="rounded-lg p-2 hover:bg-gray-100"
+          className="rounded-lg p-1.5 sm:p-2 hover:bg-gray-100"
           aria-label="通知"
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
 
         {!loading && (
@@ -158,6 +168,28 @@ export default function Header() {
           )
         )}
       </div>
+      
+      {/* モバイル検索バー */}
+      {showMobileSearch && (
+        <div className="absolute top-16 left-0 right-0 bg-white border-b p-2 md:hidden z-40">
+          <form onSubmit={(e) => {
+            handleSearch(e)
+            setShowMobileSearch(false)
+          }}>
+            <div className="relative flex items-center rounded-full border border-gray-300 bg-gray-50 px-4 py-2">
+              <Search className="h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="3Dモデルを検索..."
+                className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-400"
+                autoFocus
+              />
+            </div>
+          </form>
+        </div>
+      )}
       
       {/* 認証モーダル */}
       {showAuthModal && (

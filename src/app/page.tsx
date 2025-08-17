@@ -74,34 +74,34 @@ export default function HomePage() {
   }, [activeTab, timeRange])
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-4 lg:p-6">
       {/* ヘッダー */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           3Dモデルを探す
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
           クリエイターが作成した高品質な3Dモデルを見つけよう
         </p>
       </div>
 
       {/* タブナビゲーション */}
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex gap-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-blue-600 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {tab.label}
                 </button>
               )
@@ -110,12 +110,12 @@ export default function HomePage() {
           
           {/* 期間選択 */}
           {activeTab === 'trending' && (
-            <div className="flex gap-1 rounded-lg bg-white p-1">
+            <div className="flex gap-0.5 sm:gap-1 rounded-lg bg-white p-0.5 sm:p-1">
               {timeRanges.map((range) => (
                 <button
                   key={range.id}
                   onClick={() => setTimeRange(range.id)}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium transition-colors ${
                     timeRange === range.id
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-600 hover:text-gray-900'
@@ -130,12 +130,12 @@ export default function HomePage() {
       </div>
 
       {/* カテゴリタグ */}
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {['すべて', 'キャラクター', '建築', '乗り物', '自然', '武器', 'アニメーション'].map((category) => (
             <button
               key={category}
-              className="rounded-full border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+              className="rounded-full border border-gray-300 bg-white px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               {category}
             </button>
@@ -153,7 +153,7 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayModels.map((model) => (
               <ModelCard key={model.id} model={model} />
             ))}

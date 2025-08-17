@@ -28,9 +28,6 @@ export interface Model {
   animationDuration?: number
   licenseType: string
   isCommercialOk: boolean
-  price: number
-  currency: string
-  isFree: boolean
   viewCount: number
   downloadCount: number
   likeCount: number
@@ -41,6 +38,10 @@ export interface Model {
   updatedAt: string
   modelType?: 'file' | 'code'
   code?: string
+  // 音楽関連
+  musicUrl?: string
+  musicType?: 'upload' | 'default'
+  musicName?: string
 }
 
 export interface Tag {

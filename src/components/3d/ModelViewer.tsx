@@ -137,15 +137,15 @@ export default function ModelViewer({
         <HtmlPreview htmlContent={htmlContent} height="100%" />
         
         {/* フルスクリーンボタン */}
-        <div className="absolute bottom-4 left-4 z-10">
+        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 z-10">
           <button
-            className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            className="flex items-center gap-1 sm:gap-2 rounded-lg bg-white/80 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
             onClick={toggleFullscreen}
           >
             {isFullscreen ? (
-              <><Minimize className="h-4 w-4" /> 終了</>
+              <><Minimize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">終了</span></>
             ) : (
-              <><Maximize className="h-4 w-4" /> フルスクリーン</>
+              <><Maximize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">フルスクリーン</span></>
             )}
           </button>
         </div>
@@ -158,8 +158,8 @@ export default function ModelViewer({
     return (
       <div ref={containerRef} className="relative h-full w-full">
         {showEditor ? (
-          <div className="flex h-full flex-col lg:flex-row">
-            <div className="h-1/2 lg:h-full lg:w-1/2">
+          <div className="flex h-full flex-col md:flex-row">
+            <div className="h-1/2 md:h-full md:w-1/2">
               <CodeEditor
                 initialCode={currentCode}
                 onChange={setCurrentCode}
@@ -168,7 +168,7 @@ export default function ModelViewer({
                 onRun={(newCode) => setCurrentCode(newCode)}
               />
             </div>
-            <div className="h-1/2 lg:h-full lg:w-1/2">
+            <div className="h-1/2 md:h-full md:w-1/2">
               <CodeSandbox code={currentCode} height="100%" />
             </div>
           </div>
@@ -177,21 +177,21 @@ export default function ModelViewer({
         )}
         
         {/* コントロールUI */}
-        <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
           <button
-            className="rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            className="rounded-lg bg-white/80 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
             onClick={() => setShowEditor(!showEditor)}
           >
             {showEditor ? 'プレビューのみ' : 'エディタを表示'}
           </button>
           <button
-            className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+            className="flex items-center gap-1 sm:gap-2 rounded-lg bg-white/80 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
             onClick={toggleFullscreen}
           >
             {isFullscreen ? (
-              <><Minimize className="h-4 w-4" /> 終了</>
+              <><Minimize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">終了</span></>
             ) : (
-              <><Maximize className="h-4 w-4" /> フルスクリーン</>
+              <><Maximize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">フルスクリーン</span></>
             )}
           </button>
         </div>
@@ -259,15 +259,15 @@ export default function ModelViewer({
       </Canvas>
       
       {/* コントロールUI */}
-      <div className="absolute bottom-4 left-4 flex gap-2">
+      <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 flex gap-2">
         <button
-          className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
+          className="flex items-center gap-1 sm:gap-2 rounded-lg bg-white/80 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 backdrop-blur hover:bg-white/90"
           onClick={toggleFullscreen}
         >
           {isFullscreen ? (
-            <><Minimize className="h-4 w-4" /> 終了</>
+            <><Minimize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">終了</span></>
           ) : (
-            <><Maximize className="h-4 w-4" /> フルスクリーン</>
+            <><Maximize className="h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">フルスクリーン</span></>
           )}
         </button>
       </div>

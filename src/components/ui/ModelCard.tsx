@@ -72,15 +72,9 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
           
           {/* 価格バッジ */}
           <div className="absolute right-2 top-2">
-            {model.isFree ? (
-              <div className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white">
-                無料
-              </div>
-            ) : (
-              <div className="rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white">
-                ¥{model.price.toLocaleString()}
-              </div>
-            )}
+            <div className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white">
+              無料
+            </div>
           </div>
 
           {/* ホバー時のアクション */}

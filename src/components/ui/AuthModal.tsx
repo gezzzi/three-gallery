@@ -63,15 +63,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6">
+      <div className="relative w-full max-w-md rounded-lg bg-white p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 hover:bg-gray-100"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-lg p-1 hover:bg-gray-100"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="mb-6 text-2xl font-bold">
+        <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold">
           {mode === 'signin' ? 'ログイン' : '新規登録'}
         </h2>
 
