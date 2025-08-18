@@ -130,8 +130,37 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (uploadType === 'html' && !htmlContent) return
-    if (uploadType === 'model' && !modelFile) return
+    
+    // 必須項目のバリデーション
+    if (!formData.title.trim()) {
+      alert('タイトルを入力してください')
+      return
+    }
+    
+    if (!formData.description.trim()) {
+      alert('説明を入力してください')
+      return
+    }
+    
+    if (!formData.tags.trim()) {
+      alert('タグを入力してください')
+      return
+    }
+    
+    if (uploadType === 'html' && !htmlContent) {
+      alert('HTMLコンテンツを入力またはファイルをアップロードしてください')
+      return
+    }
+    
+    if (uploadType === 'model' && !modelFile) {
+      alert('3Dモデルファイルをアップロードしてください')
+      return
+    }
+    
+    if (musicType === 'upload' && !musicFile) {
+      alert('音楽ファイルをアップロードするか、デフォルトBGMを選択してください')
+      return
+    }
 
     setIsUploading(true)
     
@@ -413,19 +442,22 @@ export default function UploadPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">説明</label>
+            <label className="mb-1 block text-sm font-medium">
+              説明 <span className="text-red-500">*</span>
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
               rows={4}
               placeholder="コードの説明や使い方を入力してください"
+              required
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium">
-              <Tag className="inline h-4 w-4" /> タグ
+              <Tag className="inline h-4 w-4" /> タグ <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -433,6 +465,7 @@ export default function UploadPage() {
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
               placeholder="Three.js, コード, チュートリアル（カンマ区切り）"
+              required
             />
           </div>
         </div>
@@ -643,7 +676,15 @@ export default function UploadPage() {
         <div className="flex gap-4">
           <button
             type="submit"
-            disabled={(uploadType === 'html' && !htmlContent) || (uploadType === 'model' && !modelFile) || !formData.title || isUploading}
+            disabled={
+              (uploadType === 'html' && !htmlContent) || 
+              (uploadType === 'model' && !modelFile) || 
+              !formData.title.trim() || 
+              !formData.description.trim() || 
+              !formData.tags.trim() || 
+              (musicType === 'upload' && !musicFile) ||
+              isUploading
+            }
             className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isUploading ? 'アップロード中...' : 'アップロード'}
