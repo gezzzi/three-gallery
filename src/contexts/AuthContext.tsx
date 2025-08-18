@@ -29,12 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    console.log('[AuthContext] useEffect実行')
     // Supabaseが設定されているかチェック
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
+    console.log('[AuthContext] Supabase設定:', { supabaseUrl, supabaseKey: !!supabaseKey })
+    
     if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
       // Supabase未設定の場合はモックユーザーを使用
+      console.log('[AuthContext] Supabase未設定、モックユーザーを使用')
       const mockUser = {
         id: 'demo-user-001',
         email: 'demo@example.com',
@@ -49,19 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 初回認証状態チェック
+    console.log('[AuthContext] 認証状態チェック開始')
     checkUser()
 
     // 認証状態の変更を監視
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[AuthContext] 認証状態変更:', event, 'ユーザー:', session?.user?.email)
       const currentUser = session?.user || null
       setUser(currentUser)
-      
-      if (event === 'SIGNED_IN') {
-        // プロフィールが存在しない場合は作成
-        if (currentUser) {
-          await createProfileIfNotExists(currentUser)
-        }
-      }
+      setLoading(false) // 認証状態変更時にloadingをfalseに
     })
 
     return () => {
@@ -71,11 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkUser = async () => {
     try {
+      console.log('[AuthContext] getUser呼び出し中...')
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('[AuthContext] getUser結果:', user?.email)
       setUser(user)
     } catch (error) {
-      console.error('Auth check error:', error)
+      console.error('[AuthContext] Auth check error:', error)
     } finally {
+      console.log('[AuthContext] loading = false に設定')
       setLoading(false)
     }
   }

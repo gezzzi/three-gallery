@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [loading, setLoading] = useState(false) // 初期値をfalseに
+  const [loading, setLoading] = useState(true) // 初期値をtrueに戻す
   const [saving, setSaving] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [userModels, setUserModels] = useState<Model[]>([])
@@ -42,13 +42,14 @@ export default function ProfilePage() {
     website: '',
   })
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = async () => {
     if (!user) {
       setLoading(false)
       return
     }
     
     setLoading(true)
+    console.log('[Profile] fetchProfile開始')
     try {
       // Supabaseが設定されているかチェック
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -76,11 +77,13 @@ export default function ProfilePage() {
         return
       }
 
+      console.log('[Profile] Supabaseクエリ開始 - user.id:', user.id)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
+      console.log('[Profile] Supabaseクエリ完了 - data:', data, 'error:', error)
 
       if (error) {
         // プロフィールが存在しない場合は作成
@@ -135,31 +138,49 @@ export default function ProfilePage() {
         website: '',
       })
     } finally {
+      console.log('[Profile] fetchProfile完了、loading=false設定')
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }
 
-  const fetchUserModels = useCallback(async () => {
+  const fetchUserModels = async () => {
     if (!user) return
     
     // storeとモックデータから該当ユーザーのモデルを取得
     const allModels = [...storedModels, ...mockModels]
     const models = allModels.filter(m => m.userId === user.id)
     setUserModels(models)
-  }, [user, storedModels])
+  }
 
   useEffect(() => {
-    if (authLoading) return // 認証中は何もしない
+    console.log('[Profile] useEffect実行 - authLoading:', authLoading, 'user:', user?.email)
     
+    // 認証チェック中
+    if (authLoading) {
+      console.log('[Profile] 認証中のためスキップ')
+      setLoading(true)
+      return
+    }
+    
+    // ユーザーがいる場合
     if (user) {
+      console.log('[Profile] ユーザーあり、プロフィールを取得')
       fetchProfile()
       fetchUserModels()
     } else {
+      // ユーザーがいない場合
+      console.log('[Profile] ユーザーなし、loading=falseに設定')
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [user, authLoading])
+  
+  // storedModelsが更新されたら、ユーザーのモデルを更新
+  useEffect(() => {
+    if (user && !loading) {
+      fetchUserModels()
+    }
+  }, [storedModels, user, loading])
 
   const createProfile = async () => {
     if (!user) return

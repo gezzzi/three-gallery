@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const { user, loading: authLoading, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // 初期値をtrueに戻す
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   
@@ -102,17 +102,6 @@ export default function SettingsPage() {
     allowMessages: 'everyone',
     allowTagging: true,
   })
-
-  useEffect(() => {
-    if (authLoading) return // 認証中は何もしない
-    
-    if (user) {
-      loadSettings()
-    } else {
-      setLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading])
 
   const loadSettings = async () => {
     if (!user) {
@@ -164,6 +153,28 @@ export default function SettingsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    console.log('[Settings] useEffect実行 - authLoading:', authLoading, 'user:', user?.email)
+    
+    // 認証チェック中
+    if (authLoading) {
+      console.log('[Settings] 認証中のためスキップ')
+      setLoading(true)
+      return
+    }
+    
+    // ユーザーがいる場合
+    if (user) {
+      console.log('[Settings] ユーザーあり、設定を読み込み')
+      loadSettings()
+    } else {
+      // ユーザーがいない場合
+      console.log('[Settings] ユーザーなし、loading=falseに設定')
+      setLoading(false)
+    }
+    
+  }, [user, authLoading])
 
   const handleSaveAccount = async () => {
     if (!user) return

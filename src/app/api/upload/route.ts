@@ -1,35 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { getDefaultBGM } from '@/lib/defaultBgm'
 import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
+  console.log('[Upload API] リクエスト受信')
   try {
-    // Supabaseクライアントの作成（認証付き）
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: Record<string, unknown>) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string) {
-            cookieStore.delete(name)
-          },
-        },
-      }
-    )
+    // 環境変数をチェック
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
-    // 現在のユーザーを取得
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('[Upload API] Supabase設定:', { supabaseUrl, hasKey: !!supabaseKey })
+    
+    // Supabaseが設定されていない場合はローカルモードで動作
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
+      const formData = await request.formData()
+      // ローカルモードでの処理を続行
+      return NextResponse.json({ 
+        success: true, 
+        model: {
+          id: Math.random().toString(36).substr(2, 9),
+          title: formData.get('title') as string,
+          description: formData.get('description') as string,
+          // その他の必要なフィールド
+        }
+      })
+    }
+    
+    // クッキーから認証情報を取得
+    const cookieStore = await cookies()
+    
+    // Supabaseクライアントの作成
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
+    // クッキーからセッショントークンを取得して設定
+    const accessToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.0')?.value
+    const refreshToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.1')?.value
+    
+    console.log('[Upload API] トークン取得:', !!accessToken, !!refreshToken)
+    
+    let user = null
+    let authError = null
+    
+    if (accessToken && refreshToken) {
+      // セッションを設定
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      })
+      
+      if (sessionData?.session) {
+        user = sessionData.session.user
+        console.log('[Upload API] セッション設定成功:', user?.email)
+      } else {
+        authError = sessionError
+      }
+    } else {
+      // Authorizationヘッダーからトークンを取得
+      const authorization = request.headers.get('Authorization')
+      const token = authorization?.replace('Bearer ', '')
+      
+      if (token) {
+        const { data, error } = await supabase.auth.getUser(token)
+        user = data?.user
+        authError = error
+      } else {
+        authError = new Error('認証情報が見つかりません')
+      }
+    }
+    
+    console.log('[Upload API] 最終的なユーザー:', user?.email, 'エラー:', authError?.message)
     
     if (authError || !user) {
-      console.error('Auth error:', authError)
+      console.error('[Upload API] 認証エラー:', authError)
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
     }
     const formData = await request.formData()
@@ -94,6 +137,7 @@ export async function POST(request: NextRequest) {
       file_size?: number
       metadata: {
         type: string
+        code?: string
         htmlContent?: string
         fileName?: string
         fileSize?: number
@@ -106,7 +150,18 @@ export async function POST(request: NextRequest) {
     
     let modelData: ModelData | null = null
     
-    if (uploadType === 'html') {
+    if (uploadType === 'code') {
+      // Three.jsコードの場合
+      const code = formData.get('code') as string
+      modelData = {
+        file_url: 'threejs-code',
+        thumbnail_url: '/placeholder-code.svg',
+        metadata: {
+          type: 'threejs-code',
+          code: code
+        }
+      }
+    } else if (uploadType === 'html') {
       modelData = {
         file_url: 'threejs-html',
         thumbnail_url: '/placeholder-html.svg',
@@ -156,19 +211,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 挿入するデータを構築
+    const insertData = {
+      user_id: userId,
+      title,
+      description,
+      tags: tagsArray,
+      license_type: license,
+      is_commercial_ok: isCommercialOk,
+      status,
+      upload_type: uploadType,
+      ...modelData
+    }
+    
+    console.log('[Upload API] 挿入データ:', {
+      ...insertData,
+      metadata: JSON.stringify(insertData.metadata)
+    })
+    console.log('[Upload API] 現在のユーザーID:', userId)
+    console.log('[Upload API] auth.uid()の確認用:', user.id)
+    
     // データベースに保存
     const { data: model, error: dbError } = await supabase
       .from('models')
-      .insert({
-        user_id: userId,
-        title,
-        description,
-        tags: tagsArray,
-        license_type: license,
-        is_commercial_ok: isCommercialOk,
-        status,
-        ...modelData
-      })
+      .insert(insertData)
       .select()
       .single()
 

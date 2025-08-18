@@ -8,6 +8,7 @@ import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { Model } from '@/types'
 import { defaultBGMs } from '@/lib/defaultBgm'
+import { supabase } from '@/lib/supabase'
 
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), { ssr: false })
@@ -130,6 +131,15 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[Upload] handleSubmit開始 - user:', user?.email)
+    
+    // ユーザーチェック
+    if (!user) {
+      console.log('[Upload] ユーザーが未ログイン')
+      alert('ログインが必要です')
+      setShowAuthModal(true)
+      return
+    }
     
     // 必須項目のバリデーション
     if (!formData.title.trim()) {
@@ -188,10 +198,23 @@ export default function UploadPage() {
         data.append('modelFile', modelFile!)
       }
       
+      // Supabaseのセッショントークンを取得
+      console.log('[Upload] セッション取得中...')
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('[Upload] セッション:', session?.user?.email, 'トークン有無:', !!session?.access_token)
+      
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      console.log('[Upload] APIリクエスト送信中...')
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: data,
+        headers,
       })
+      console.log('[Upload] APIレスポンス:', response.status)
       
       const result = await response.json()
       

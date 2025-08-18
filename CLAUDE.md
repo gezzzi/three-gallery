@@ -8,11 +8,11 @@ Three Gallery is a 3D content sharing platform supporting three upload types: Th
 
 ## Current Configuration Status
 
-The project currently has Supabase fully configured with:
-- Authentication (Google OAuth enabled)
-- Database schema deployed
+The project currently has Supabase configured with:
+- Authentication (Google OAuth enabled, password requirements: min 8 chars, lowercase + uppercase + numbers required)
+- Database schema deployed with RLS policies
 - Environment variables set in `.env.local`
-- All pricing/payment features have been removed (keeping commercial use permissions)
+- **Important**: RLS on `models` table is temporarily disabled due to auth issues in API routes
 
 ## Essential Commands
 
@@ -43,6 +43,7 @@ npm run build && npm run start  # Test production build locally
 - **Protected Routes**: 
   - `/upload` - Shows login prompt if not authenticated
   - `/profile` - Shows login prompt if not authenticated
+  - `/settings` - Redirects to home if not authenticated
   - Routes check `user` from `useAuth()` hook
 
 ### State Management
@@ -76,10 +77,6 @@ npm run build && npm run start  # Test production build locally
 NEXT_PUBLIC_SUPABASE_URL         # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY    # Supabase anonymous key
 NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
-
-# Optional (Stripe features removed but env vars may still exist)
-STRIPE_SECRET_KEY                 # No longer used
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY # No longer used
 ```
 
 ### Operating Modes
@@ -96,47 +93,41 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY # No longer used
 - Upload API returns success with local storage
 - No persistence between sessions
 
-### Common Issues & Solutions
+### Known Issues & Solutions
 
-1. **Hydration Mismatch**: Dark Reader extension - fixed with `suppressHydrationWarning` on html/body
-2. **Port Conflicts**: Dev server auto-switches to 3001/3002 if 3000 is occupied
-3. **Profile Fetch Errors**: Gracefully falls back to local profile when Supabase unavailable
-4. **OAuth Redirect Loop**: Ensure redirect URLs match in Supabase dashboard and use dynamic origin
-5. **Fullscreen API**: May fail in some browsers - errors caught and logged silently
+1. **Profile/Settings Page Loading Issues**: Fixed by removing `hasLoaded` flag from useEffect dependencies
+2. **Authentication Race Condition**: SIGNED_IN event handler removed from AuthContext to prevent concurrent DB access
+3. **RLS Policy Issues**: Currently disabled on `models` table - API route authentication with Supabase needs proper implementation
+4. **Hydration Mismatch**: Dark Reader extension - fixed with `suppressHydrationWarning` on html/body
+5. **OAuth Redirect Loop**: Ensure redirect URLs match in Supabase dashboard and use dynamic origin
 6. **Build Route Manifest Error**: Clean `.next` folder and restart dev server if routes-manifest.json errors occur
 
 ### File Upload Handling
-- **Code**: Stored as string in metadata.code
-- **HTML**: Read as text via FileReader, stored in metadata.htmlContent  
-- **3D Models**: Create blob URL for preview using URL.createObjectURL(), cleanup on unmount
+- **Code**: Stored as string in metadata.code, requires `file_url: 'threejs-code'`
+- **HTML**: Read as text via FileReader, stored in metadata.htmlContent, requires `file_url: 'threejs-html'`
+- **3D Models**: Create blob URL for preview using URL.createObjectURL(), requires `file_url` with model path
 - **BGM Files**: Stored as metadata with type indicator (default/upload)
-- **API Route** (`/api/upload/route.ts`): Handles all three types, returns local or DB storage based on Supabase config
+- **API Route** (`/api/upload/route.ts`): Handles all three types, requires proper authentication setup
 
 ### Type Patterns
-- Models use `Model` interface from `src/types/index.ts` (no price/currency/isFree fields)
+- Models use `Model` interface from `src/types/index.ts`
 - Avoid `any` - use `Record<string, unknown>` for metadata type assertions
 - Error handling: Always check `error instanceof Error`
 - Optional chaining for user metadata: `user?.user_metadata?.avatar_url`
 - Type assertions for metadata access: `metadata.music_url as string`
 
-## Deployment Considerations
+## Database Schema (When Connected)
 
-### Vercel Deployment
-- Set all env vars in Vercel dashboard
-- Build fails if TypeScript errors exist
-- API routes in `src/app/api/` auto-deployed as serverless functions
-- Warnings acceptable but errors must be fixed
-
-### Database Schema (When Connected)
 Tables in `supabase/schema.sql`:
 - `profiles`: Extended user data with username, bio, avatar
-- `models`: 3D content metadata with tags, licensing, stats (pricing columns may exist but unused)
-- `comments`, `likes`, `follows`: Social features (UI exists, backend pending)
-- Row Level Security (RLS) policies required for production
+- `models`: 3D content metadata with tags, licensing, stats, BGM fields, `upload_type` field
+- `comments`, `likes`, `follows`, `bookmarks`: Social features
+- `tags`, `downloads`, `transactions`: Content management
+- Row Level Security (RLS) policies configured but temporarily disabled on `models` table
 
-### Recent Changes
-- All pricing/payment functionality removed while keeping commercial use permissions
-- BGM selection UI improved with collapsible dropdown
-- Model type consolidated to remove `isFree`, `price`, `currency` fields
-- Search page price filters disabled
-- Purchase page repurposed as download history
+### Recent Updates
+- Fixed profile/settings pages loading state by removing race conditions
+- Enhanced upload API to support all three upload types (code, html, model)
+- RLS on models table temporarily disabled due to authentication issues in API routes
+- Added `upload_type` field handling in upload API
+- Fixed concurrent authentication state updates causing infinite loading

@@ -19,7 +19,10 @@
       "mcp__supabase__list_tables",
       "mcp__supabase__execute_sql",
       "mcp__supabase__get_advisors",
-      "mcp__supabase__apply_migration"
+      "mcp__supabase__apply_migration",
+      "Bash(for pid in 10008 21568 22556 19460 5536 21132 16596 11416 6240)",
+      "Bash(do taskkill //PID $pid //F)",
+      "Bash(done)"
     ]
   },
   "disableAllHooks": true
