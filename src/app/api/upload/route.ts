@@ -1,9 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
+import { createServerClient } from '@supabase/ssr'
+import { getDefaultBGM } from '@/lib/defaultBgm'
+import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
+    // Supabaseクライアントの作成（認証付き）
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: Record<string, unknown>) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string) {
+            cookieStore.delete(name)
+          },
+        },
+      }
+    )
+    
+    // 現在のユーザーを取得
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError)
+      return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+    }
     const formData = await request.formData()
     const uploadType = formData.get('uploadType') as string
     const title = formData.get('title') as string
@@ -12,8 +40,6 @@ export async function POST(request: NextRequest) {
     const license = formData.get('license') as string
     const isCommercialOk = formData.get('isCommercialOk') === 'true'
     const status = formData.get('status') as string
-    const code = formData.get('code') as string
-    const template = formData.get('template') as string
     const htmlContent = formData.get('htmlContent') as string
     const modelFile = formData.get('modelFile') as File
     
@@ -22,13 +48,34 @@ export async function POST(request: NextRequest) {
     const musicFile = formData.get('musicFile') as File | null
     const selectedBgmId = formData.get('selectedBgmId') as string
     
-    // UUID形式のデモユーザーIDを使用
-    const userId = formData.get('userId') as string || '00000000-0000-0000-0000-000000000001'
-
-    if (uploadType === 'code' && !code) {
-      return NextResponse.json({ error: 'コードが必要です' }, { status: 400 })
-    }
+    // 認証されたユーザーIDを使用
+    const userId = user.id
     
+    // プロファイルが存在するか確認し、存在しない場合は作成
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    if (profileError && profileError.code === 'PGRST116') {
+      // プロファイルが存在しない場合は作成
+      const username = user.email?.split('@')[0] || `user_${userId.slice(0, 8)}`
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          username: username,
+          display_name: username,
+          avatar_url: user.user_metadata?.avatar_url || null
+        })
+      
+      if (insertError) {
+        console.error('Profile creation error:', insertError)
+        return NextResponse.json({ error: 'プロファイルの作成に失敗しました' }, { status: 500 })
+      }
+    }
+
     if (uploadType === 'html' && !htmlContent) {
       return NextResponse.json({ error: 'HTMLコンテンツが必要です' }, { status: 400 })
     }
@@ -47,30 +94,19 @@ export async function POST(request: NextRequest) {
       file_size?: number
       metadata: {
         type: string
-        code?: string
-        template?: string
         htmlContent?: string
         fileName?: string
         fileSize?: number
         music_url?: string
         music_type?: string
         music_name?: string
+        music_id?: string
       }
     }
     
     let modelData: ModelData | null = null
     
-    if (uploadType === 'code') {
-      modelData = {
-        file_url: 'threejs-code',
-        thumbnail_url: '/placeholder-code.svg',
-        metadata: {
-          type: 'threejs-code',
-          code: code,
-          template: template || 'custom'
-        }
-      }
-    } else if (uploadType === 'html') {
+    if (uploadType === 'html') {
       modelData = {
         file_url: 'threejs-html',
         thumbnail_url: '/placeholder-html.svg',
@@ -111,9 +147,12 @@ export async function POST(request: NextRequest) {
       }
     } else if (musicType === 'default' && selectedBgmId) {
       // デフォルトBGMの使用
-      if (modelData) {
-        modelData.metadata.music_url = selectedBgmId // BGMのIDを保存
+      const bgm = getDefaultBGM(selectedBgmId)
+      if (modelData && bgm) {
+        modelData.metadata.music_url = bgm.url // 実際のURLを保存
         modelData.metadata.music_type = 'default'
+        modelData.metadata.music_name = bgm.name
+        modelData.metadata.music_id = selectedBgmId // IDも保存
       }
     }
 
@@ -134,30 +173,20 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (dbError) {
-      console.error('Database error:', dbError)
+      console.error('Database error details:', {
+        code: dbError.code,
+        message: dbError.message,
+        details: dbError.details,
+        hint: dbError.hint,
+        modelData
+      })
       
-      // 開発環境でよくあるエラーの場合はローカルモードで保存
-      if (dbError.code === '42P01' || // table does not exist
-          dbError.code === '23503' || // foreign key violation
-          dbError.code === '22P02' || // invalid input syntax for uuid
-          dbError.code === '42501' || // insufficient privilege
-          dbError.message?.includes('row-level security') || // RLSポリシーエラー
-          dbError.message?.includes('relation') ||
-          dbError.message?.includes('bucket')) {
-        // ローカルモードで保存
-        return NextResponse.json({
-          success: true,
-          model: {
-            id: uuidv4(),
-            title,
-            description,
-            tags: tagsArray,
-            ...modelData
-          },
-          message: 'ローカルモードで保存されました'
-        })
-      }
-      return NextResponse.json({ error: `データベースエラー: ${dbError.message}` }, { status: 500 })
+      return NextResponse.json({ 
+        error: `データベースエラー: ${dbError.message}`,
+        details: dbError.details,
+        hint: dbError.hint,
+        code: dbError.code
+      }, { status: 500 })
     }
 
     return NextResponse.json({

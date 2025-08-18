@@ -104,14 +104,21 @@ export default function SettingsPage() {
   })
 
   useEffect(() => {
+    if (authLoading) return // 認証中は何もしない
+    
     if (user) {
       loadSettings()
+    } else {
+      setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, authLoading])
 
   const loadSettings = async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
     
     setLoading(true)
     try {

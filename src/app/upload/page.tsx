@@ -9,8 +9,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Model } from '@/types'
 import { defaultBGMs } from '@/lib/defaultBgm'
 
-const CodeEditor = dynamic(() => import('@/components/ui/CodeEditor'), { ssr: false })
-const CodeSandbox = dynamic(() => import('@/components/3d/CodeSandbox'), { ssr: false })
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), { ssr: false })
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
@@ -24,99 +22,17 @@ const licenses = [
   { id: 'MIT', label: 'MIT', description: 'MITライセンス' },
 ]
 
-const codeTemplates = {
-  basic: `// 基本的なThree.jsシーン
-// THREE, scene, camera, renderer, controlsは既に定義されています
-
-// 立方体を作成
-const geometry = new THREE.BoxGeometry(2, 2, 2);
-const material = new THREE.MeshPhongMaterial({
-  color: 0x00ff00,
-  wireframe: false
-});
-const cube = new THREE.Mesh(geometry, material);
-cube.castShadow = true;
-cube.receiveShadow = true;
-scene.add(cube);
-
-// アニメーション関数を定義
-userAnimate = function() {
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-};`,
-  particles: `// パーティクルシステム
-// THREE, scene, camera, renderer, controlsは既に定義されています
-
-const particlesGeometry = new THREE.BufferGeometry();
-const particleCount = 1000;
-const positions = new Float32Array(particleCount * 3);
-const colors = new Float32Array(particleCount * 3);
-
-for (let i = 0; i < particleCount * 3; i++) {
-  positions[i] = (Math.random() - 0.5) * 20;
-  colors[i] = Math.random();
-}
-
-particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-const particlesMaterial = new THREE.PointsMaterial({
-  size: 0.1,
-  vertexColors: true,
-  transparent: true,
-  opacity: 0.8
-});
-
-const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-scene.add(particles);
-
-// アニメーション関数を定義
-userAnimate = function() {
-  particles.rotation.y += 0.001;
-  particles.rotation.x += 0.0005;
-};`,
-  sphere: `// 輝く球体
-// THREE, scene, camera, renderer, controlsは既に定義されています
-
-// 球体を作成
-const geometry = new THREE.SphereGeometry(2, 32, 32);
-const material = new THREE.MeshPhongMaterial({
-  color: 0x2194ce,
-  emissive: 0x112244,
-  shininess: 100,
-  specular: 0xffffff
-});
-const sphere = new THREE.Mesh(geometry, material);
-sphere.castShadow = true;
-sphere.receiveShadow = true;
-scene.add(sphere);
-
-// 追加の光源
-const pointLight = new THREE.PointLight(0xff00ff, 1, 100);
-pointLight.position.set(0, 5, 0);
-scene.add(pointLight);
-
-// アニメーション関数を定義
-userAnimate = function() {
-  sphere.rotation.y += 0.01;
-  const time = Date.now() * 0.001;
-  sphere.position.y = Math.sin(time) * 2;
-  pointLight.position.x = Math.sin(time * 0.7) * 5;
-  pointLight.position.z = Math.cos(time * 0.7) * 5;
-};`
-}
 
 export default function UploadPage() {
   const router = useRouter()
   const addModel = useStore((state) => state.addModel)
   const { user, loading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [uploadType, setUploadType] = useState<'code' | 'html' | 'model'>('code')
-  const [code, setCode] = useState(codeTemplates.basic)
+  const [uploadType, setUploadType] = useState<'html' | 'model'>('html')
   const [htmlContent, setHtmlContent] = useState('')
+  const [htmlInputType, setHtmlInputType] = useState<'file' | 'code'>('file')
   const [modelFile, setModelFile] = useState<File | null>(null)
   const [modelUrl, setModelUrl] = useState<string | null>(null)
-  const [selectedTemplate, setSelectedTemplate] = useState('basic')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -132,10 +48,6 @@ export default function UploadPage() {
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null)
   const [isBgmListOpen, setIsBgmListOpen] = useState(false)
 
-  const handleTemplateChange = (template: string) => {
-    setSelectedTemplate(template)
-    setCode(codeTemplates[template as keyof typeof codeTemplates])
-  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -218,7 +130,6 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (uploadType === 'code' && !code) return
     if (uploadType === 'html' && !htmlContent) return
     if (uploadType === 'model' && !modelFile) return
 
@@ -242,10 +153,7 @@ export default function UploadPage() {
         data.append('selectedBgmId', selectedBgmId)
       }
       
-      if (uploadType === 'code') {
-        data.append('code', code)
-        data.append('template', selectedTemplate)
-      } else if (uploadType === 'html') {
+      if (uploadType === 'html') {
         data.append('htmlContent', htmlContent)
       } else if (uploadType === 'model') {
         data.append('modelFile', modelFile!)
@@ -364,19 +272,9 @@ export default function UploadPage() {
           <label className="flex items-center gap-2">
             <input
               type="radio"
-              value="code"
-              checked={uploadType === 'code'}
-              onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
-              className="h-4 w-4"
-            />
-            <span className="text-sm sm:text-base">Three.jsコード</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
               value="html"
               checked={uploadType === 'html'}
-              onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
+              onChange={(e) => setUploadType(e.target.value as 'html' | 'model')}
               className="h-4 w-4"
             />
             <span className="text-sm sm:text-base">HTMLファイル</span>
@@ -386,7 +284,7 @@ export default function UploadPage() {
               type="radio"
               value="model"
               checked={uploadType === 'model'}
-              onChange={(e) => setUploadType(e.target.value as 'code' | 'html' | 'model')}
+              onChange={(e) => setUploadType(e.target.value as 'html' | 'model')}
               className="h-4 w-4"
             />
             <span className="text-sm sm:text-base">3Dモデル (GLB/GLTF)</span>
@@ -395,77 +293,59 @@ export default function UploadPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* コードエディタまたはHTMLアップロード */}
-        {uploadType === 'code' ? (
+        {/* HTMLアップロード */}
+        {uploadType === 'html' ? (
           <div className="space-y-4">
-            {/* テンプレート選択 */}
+            {/* HTML入力方法選択 */}
             <div className="rounded-lg bg-white p-4">
-              <label className="mb-2 block text-sm font-medium">テンプレート</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleTemplateChange('basic')}
-                  className={`rounded px-3 py-1 text-sm ${
-                    selectedTemplate === 'basic'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  基本
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTemplateChange('particles')}
-                  className={`rounded px-3 py-1 text-sm ${
-                    selectedTemplate === 'particles'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  パーティクル
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTemplateChange('sphere')}
-                  className={`rounded px-3 py-1 text-sm ${
-                    selectedTemplate === 'sphere'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  球体
-                </button>
+              <label className="mb-2 block text-sm font-medium">HTML入力方法</label>
+              <div className="flex gap-4 mb-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="file"
+                    checked={htmlInputType === 'file'}
+                    onChange={(e) => setHtmlInputType(e.target.value as 'file' | 'code')}
+                    className="h-4 w-4"
+                  />
+                  <span>ファイルアップロード</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="code"
+                    checked={htmlInputType === 'code'}
+                    onChange={(e) => setHtmlInputType(e.target.value as 'file' | 'code')}
+                    className="h-4 w-4"
+                  />
+                  <span>コードを貼り付け</span>
+                </label>
               </div>
-            </div>
-
-            {/* コードエディタとプレビュー */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="rounded-lg bg-white">
-                <h3 className="border-b px-4 py-2 font-medium">コードエディタ</h3>
-                <CodeEditor
-                  initialCode={code}
-                  onChange={setCode}
-                  height="500px"
-                  showControls={false}
-                />
-              </div>
-              <div className="rounded-lg bg-white">
-                <h3 className="border-b px-4 py-2 font-medium">プレビュー</h3>
-                <CodeSandbox code={code} height="500px" />
-              </div>
-            </div>
-          </div>
-        ) : uploadType === 'html' ? (
-          <div className="space-y-4">
-            {/* HTMLファイルアップロード */}
-            <div className="rounded-lg bg-white p-4">
-              <label className="mb-2 block text-sm font-medium">HTMLファイル</label>
-              <input
-                type="file"
-                accept=".html"
-                onChange={handleFileUpload}
-                className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
-              />
+              
+              {/* HTMLファイルアップロード */}
+              {htmlInputType === 'file' ? (
+                <>
+                  <label className="mb-2 block text-sm font-medium">HTMLファイル</label>
+                  <input
+                    type="file"
+                    accept=".html"
+                    onChange={handleFileUpload}
+                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  />
+                </>
+              ) : (
+                /* HTMLコード入力 */
+                <>
+                  <label className="mb-2 block text-sm font-medium">HTMLコード</label>
+                  <textarea
+                    value={htmlContent}
+                    onChange={(e) => setHtmlContent(e.target.value)}
+                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none font-mono text-sm"
+                    rows={15}
+                    placeholder="HTMLコードをここに貼り付けてください..."
+                  />
+                </>
+              )}
             </div>
             
             {/* HTMLプレビュー */}
@@ -763,7 +643,7 @@ export default function UploadPage() {
         <div className="flex gap-4">
           <button
             type="submit"
-            disabled={(uploadType === 'code' && !code) || (uploadType === 'html' && !htmlContent) || (uploadType === 'model' && !modelFile) || !formData.title || isUploading}
+            disabled={(uploadType === 'html' && !htmlContent) || (uploadType === 'model' && !modelFile) || !formData.title || isUploading}
             className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isUploading ? 'アップロード中...' : 'アップロード'}

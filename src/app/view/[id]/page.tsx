@@ -58,11 +58,27 @@ export default function ViewPage() {
       
       // 音楽のURLを設定（metadataから取得）
       const metadata = foundModel.metadata as Record<string, unknown>
-      if (metadata?.music_type === 'default' && metadata?.music_url) {
-        const bgm = getDefaultBGM(metadata.music_url as string)
-        if (bgm) {
-          setMusicUrl(bgm.url)
-          setMusicName(bgm.name)
+      if (metadata?.music_type === 'default') {
+        // 新しい形式: URLが直接保存されている場合
+        if (metadata?.music_url && (metadata.music_url as string).startsWith('/')) {
+          setMusicUrl(metadata.music_url as string)
+          setMusicName((metadata.music_name as string) || 'デフォルトBGM')
+        }
+        // 古い形式: IDが保存されている場合
+        else if (metadata?.music_url) {
+          const bgm = getDefaultBGM(metadata.music_url as string)
+          if (bgm) {
+            setMusicUrl(bgm.url)
+            setMusicName(bgm.name)
+          }
+        }
+        // music_idが保存されている場合
+        else if (metadata?.music_id) {
+          const bgm = getDefaultBGM(metadata.music_id as string)
+          if (bgm) {
+            setMusicUrl(bgm.url)
+            setMusicName(bgm.name)
+          }
         }
       } else if (metadata?.music_type === 'upload' && metadata?.music_url) {
         setMusicUrl(metadata.music_url as string)
@@ -112,15 +128,12 @@ export default function ViewPage() {
       {/* 3Dビューア */}
       <div className="h-[60vh] bg-gray-900 relative">
         <ModelViewer 
-          modelUrl={model.fileUrl === 'threejs-code' || model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
-          code={model.metadata?.code as string | undefined}
+          modelUrl={model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
           htmlContent={model.metadata?.htmlContent as string | undefined}
           modelType={
-            model.metadata?.type === 'threejs-code' ? 'code' : 
             model.metadata?.type === 'threejs-html' ? 'html' : 
             'file'
           }
-          showCodeEditor={model.metadata?.type === 'threejs-code'}
         />
         
         {/* 音楽プレイヤー */}

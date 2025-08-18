@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // 初期値をfalseに
   const [saving, setSaving] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [userModels, setUserModels] = useState<Model[]>([])
@@ -43,8 +43,12 @@ export default function ProfilePage() {
   })
 
   const fetchProfile = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
     
+    setLoading(true)
     try {
       // Supabaseが設定されているかチェック
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -146,15 +150,16 @@ export default function ProfilePage() {
   }, [user, storedModels])
 
   useEffect(() => {
-    if (!authLoading) {
-      if (user) {
-        fetchProfile()
-        fetchUserModels()
-      } else {
-        setLoading(false)
-      }
+    if (authLoading) return // 認証中は何もしない
+    
+    if (user) {
+      fetchProfile()
+      fetchUserModels()
+    } else {
+      setLoading(false)
     }
-  }, [user, authLoading, fetchProfile, fetchUserModels])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading])
 
   const createProfile = async () => {
     if (!user) return

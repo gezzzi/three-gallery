@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test</title>
+</head>
+<body>
+    <h1>音楽再生テスト</h1>
+    <p>BGMファイルの再生テストページです。</p>
+    
+    <div style="margin: 20px 0;">
+        <h2>Chill Vibes</h2>
+        <audio controls>
+            <source src="/bgm/chill-vibes.mp3" type="audio/mpeg">
+            お使いのブラウザは音楽再生に対応していません。
+        </audio>
+    </div>
+
+    <div style="margin: 20px 0;">
+        <h2>Creative Energy</h2>
+        <audio controls>
+            <source src="/bgm/creative-energy.mp3" type="audio/mpeg">
+            お使いのブラウザは音楽再生に対応していません。
+        </audio>
+    </div>
+
+    <div style="margin: 20px 0;">
+        <h2>JavaScript制御のテスト</h2>
+        <button id="playBtn">再生</button>
+        <button id="pauseBtn">停止</button>
+        <div id="status">状態: 未再生</div>
+    </div>
+
+    <script>
+        const audio = new Audio('/bgm/ambient-space.mp3');
+        audio.volume = 0.7;
+        
+        document.getElementById('playBtn').addEventListener('click', () => {
+            audio.play().then(() => {
+                document.getElementById('status').textContent = '状態: 再生中';
+                console.log('音楽再生成功');
+            }).catch(err => {
+                document.getElementById('status').textContent = '状態: エラー - ' + err.message;
+                console.error('音楽再生エラー:', err);
+            });
+        });
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            audio.pause();
+            document.getElementById('status').textContent = '状態: 停止';
+        });
+        
+        // オーディオイベントログ
+        audio.addEventListener('loadstart', () => console.log('loadstart'));
+        audio.addEventListener('loadeddata', () => console.log('loadeddata'));
+        audio.addEventListener('canplay', () => console.log('canplay'));
+        audio.addEventListener('error', (e) => console.error('error:', e));
+    </script>
+</body>
+</html>
