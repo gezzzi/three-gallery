@@ -5,7 +5,6 @@ import ModelCard from '@/components/ui/ModelCard'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { TrendingUp, Clock, Star, Download } from 'lucide-react'
-import { useStore } from '@/store/useStore'
 import { supabase } from '@/lib/supabase'
 
 const tabs = [
@@ -27,7 +26,6 @@ export default function HomePage() {
   const [timeRange, setTimeRange] = useState('24h')
   const [displayModels, setDisplayModels] = useState<Model[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const storedModels = useStore((state) => state.models)
 
   // モデルの取得とソート処理
   useEffect(() => {
@@ -44,12 +42,8 @@ export default function HomePage() {
         
         if (error) {
           console.error('Error fetching models:', error)
-          // エラー時はモックデータを使用
-          const allModels = [...storedModels, ...mockModels]
-          const uniqueModels = Array.from(
-            new Map(allModels.map(model => [model.id, model])).values()
-          )
-          sortAndSetModels(uniqueModels)
+          // エラー時はモックデータのみを使用
+          sortAndSetModels(mockModels)
         } else if (supabaseModels) {
           // Supabaseのデータを適切な形式に変換
           const formattedModels: Model[] = supabaseModels.map(model => ({
@@ -81,24 +75,16 @@ export default function HomePage() {
             musicName: model.bgm_name || (model.metadata?.music_name as string) || undefined
           }))
           
-          // storeのモデルと結合（ローカルアップロードされたものを含む）
-          const allModels = [...formattedModels, ...storedModels]
-          const uniqueModels = Array.from(
-            new Map(allModels.map(model => [model.id, model])).values()
-          )
-          sortAndSetModels(uniqueModels)
+          // Supabaseのデータのみを使用（ローカルストアは使用しない）
+          sortAndSetModels(formattedModels)
         } else {
-          // データがない場合はモックデータを使用
-          sortAndSetModels([...storedModels, ...mockModels])
+          // データがない場合はモックデータのみを使用
+          sortAndSetModels(mockModels)
         }
       } catch (error) {
         console.error('Error in fetchModels:', error)
-        // エラー時はモックデータを使用
-        const allModels = [...storedModels, ...mockModels]
-        const uniqueModels = Array.from(
-          new Map(allModels.map(model => [model.id, model])).values()
-        )
-        sortAndSetModels(uniqueModels)
+        // エラー時はモックデータのみを使用
+        sortAndSetModels(mockModels)
       }
     }
     
@@ -132,7 +118,7 @@ export default function HomePage() {
     }
     
     fetchModels()
-  }, [activeTab, timeRange, storedModels])
+  }, [activeTab, timeRange])
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">

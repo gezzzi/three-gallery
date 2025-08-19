@@ -5,7 +5,7 @@ import { TrendingUp, Clock, Flame, Award } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
-import { useStore } from '@/store/useStore'
+import { supabase } from '@/lib/supabase'
 
 const timeRanges = [
   { id: '24h', label: '24時間', icon: Clock },
@@ -30,50 +30,97 @@ export default function TrendingPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [trendingModels, setTrendingModels] = useState<Model[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const storedModels = useStore((state) => state.models)
-
   useEffect(() => {
-    setIsLoading(true)
-    
-    const timer = setTimeout(() => {
-      // storeのモデルとモックデータを結合（重複を排除）
-      const allModels = [...storedModels, ...mockModels]
-      const uniqueModels = Array.from(
-        new Map(allModels.map(model => [model.id, model])).values()
-      )
+    const fetchModels = async () => {
+      setIsLoading(true)
       
-      // カテゴリでフィルタリング
-      let filteredModels = uniqueModels
-      if (selectedCategory !== 'all') {
-        filteredModels = uniqueModels.filter(model => {
-          if (selectedCategory === 'character') return model.tags.includes('キャラクター')
-          if (selectedCategory === 'architecture') return model.tags.includes('建築')
-          if (selectedCategory === 'vehicle') return model.tags.includes('乗り物')
-          if (selectedCategory === 'nature') return model.tags.includes('自然')
-          if (selectedCategory === 'weapon') return model.tags.includes('武器')
-          if (selectedCategory === 'animation') return model.hasAnimation
-          if (selectedCategory === 'code') return model.modelType === 'code'
-          return true
+      try {
+        // Supabaseからモデルを取得
+        const { data: supabaseModels, error } = await supabase
+          .from('models')
+          .select('*')
+          .eq('status', 'public')
+          .order('created_at', { ascending: false })
+        
+        let models: Model[] = []
+        
+        if (error) {
+          console.error('Error fetching models:', error)
+          // エラー時はモックデータのみを使用
+          models = mockModels
+        } else if (supabaseModels && supabaseModels.length > 0) {
+          // Supabaseのデータを適切な形式に変換
+          models = supabaseModels.map(model => ({
+            id: model.id,
+            userId: model.user_id,
+            title: model.title,
+            description: model.description || '',
+            thumbnailUrl: model.thumbnail_url || '/placeholder-3d.svg',
+            fileUrl: model.file_url,
+            previewUrl: model.preview_url,
+            originalFileUrl: model.original_file_url,
+            metadata: model.metadata || {},
+            tags: model.tags || [],
+            viewCount: model.view_count || 0,
+            downloadCount: model.download_count || 0,
+            likeCount: model.like_count || 0,
+            createdAt: model.created_at,
+            updatedAt: model.updated_at || model.created_at,
+            status: model.status || 'public',
+            licenseType: model.license_type || 'CC BY',
+            isCommercialOk: model.is_commercial_ok || false,
+            fileSize: model.file_size || 0,
+            hasAnimation: model.has_animation || false,
+            polygonCount: model.polygon_count,
+            animationDuration: model.animation_duration,
+            modelType: model.upload_type === 'code' ? 'code' as const : undefined,
+            // BGMデータを追加
+            musicType: model.bgm_type || (model.metadata?.music_type as string) || undefined,
+            musicUrl: model.bgm_url || (model.metadata?.music_url as string) || undefined,
+            musicName: model.bgm_name || (model.metadata?.music_name as string) || undefined
+          }))
+        } else {
+          // データがない場合はモックデータを使用
+          models = mockModels
+        }
+        
+        // カテゴリでフィルタリング
+        let filteredModels = models
+        if (selectedCategory !== 'all') {
+          filteredModels = models.filter(model => {
+            if (selectedCategory === 'character') return model.tags.includes('キャラクター')
+            if (selectedCategory === 'architecture') return model.tags.includes('建築')
+            if (selectedCategory === 'vehicle') return model.tags.includes('乗り物')
+            if (selectedCategory === 'nature') return model.tags.includes('自然')
+            if (selectedCategory === 'weapon') return model.tags.includes('武器')
+            if (selectedCategory === 'animation') return model.hasAnimation
+            if (selectedCategory === 'code') return model.modelType === 'code'
+            return true
+          })
+        }
+        
+        // 期間に応じてフィルタリング（デモのため現在は全て表示）
+        // 実際のアプリケーションでは、createdAtを基に期間フィルタリングを実装
+        
+        // トレンドスコアでソート
+        const sortedModels = [...filteredModels].sort((a, b) => {
+          // トレンドスコア = ビュー数 + いいね数×2 + ダウンロード数×3
+          const scoreA = a.viewCount + a.likeCount * 2 + a.downloadCount * 3
+          const scoreB = b.viewCount + b.likeCount * 2 + b.downloadCount * 3
+          return scoreB - scoreA
         })
+        
+        setTrendingModels(sortedModels)
+      } catch (error) {
+        console.error('Error in fetchModels:', error)
+        // エラー時はモックデータのみを使用
+        setTrendingModels(mockModels)
+      } finally {
+        setIsLoading(false)
       }
-      
-      // 期間に応じてフィルタリング（デモのため現在は全て表示）
-      // 実際のアプリケーションでは、createdAtを基に期間フィルタリングを実装
-      
-      // トレンドスコアでソート
-      const sortedModels = [...filteredModels].sort((a, b) => {
-        // トレンドスコア = ビュー数 + いいね数×2 + ダウンロード数×3
-        const scoreA = a.viewCount + a.likeCount * 2 + a.downloadCount * 3
-        const scoreB = b.viewCount + b.likeCount * 2 + b.downloadCount * 3
-        return scoreB - scoreA
-      })
-      
-      setTrendingModels(sortedModels)
-      setIsLoading(false)
-    }, 100)
+    }
     
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchModels()
   }, [timeRange, selectedCategory])
 
   const selectedTimeRange = timeRanges.find(r => r.id === timeRange)

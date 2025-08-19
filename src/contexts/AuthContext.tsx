@@ -83,25 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const createProfileIfNotExists = async (user: User) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) {
-      // プロフィールを作成
-      const username = user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`
-      
-      await supabase.from('profiles').insert({
-        id: user.id,
-        username,
-        display_name: username,
-        avatar_url: user.user_metadata?.avatar_url || null,
-      })
-    }
-  }
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({

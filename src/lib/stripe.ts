@@ -139,7 +139,7 @@ export async function handleWebhook(
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err) {
+  } catch {
     throw new Error(`Webhook signature verification failed`)
   }
 
@@ -174,29 +174,29 @@ export async function handleWebhook(
   return { received: true }
 }
 
-async function processPurchase(session: Stripe.Checkout.Session) {
+async function processPurchase(_: Stripe.Checkout.Session) {
   // データベースに購入記録を保存
-  const { modelId, sellerId, buyerId } = session.metadata!
+  // const { modelId, sellerId, buyerId } = session.metadata!
   
   // Supabaseに記録
   // await supabase.from('downloads').insert({...})
   // await supabase.from('transactions').insert({...})
 }
 
-async function processTip(session: Stripe.Checkout.Session) {
+async function processTip(_: Stripe.Checkout.Session) {
   // 投げ銭の記録
-  const { recipientId, tipperId } = session.metadata!
+  // const { recipientId, tipperId } = session.metadata!
   
   // Supabaseに記録
   // await supabase.from('transactions').insert({...})
 }
 
-async function updateSubscription(subscription: Stripe.Subscription) {
+async function updateSubscription(_: Stripe.Subscription) {
   // サブスクリプション更新
   // await supabase.from('profiles').update({...})
 }
 
-async function cancelSubscription(subscription: Stripe.Subscription) {
+async function cancelSubscription(_: Stripe.Subscription) {
   // サブスクリプション解約処理
   // await supabase.from('profiles').update({...})
 }

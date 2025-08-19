@@ -4,13 +4,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { Camera, Mail, Calendar, Edit2, Save, X, LogIn, Loader2 } from 'lucide-react'
+import { Camera, Mail, Calendar, Edit2, Save, X, LogIn, Loader2, Trash2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { formatDate } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
-import { useStore } from '@/store/useStore'
-import { mockModels } from '@/lib/mockData'
 
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
 
@@ -33,7 +31,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [userModels, setUserModels] = useState<Model[]>([])
-  const storedModels = useStore((state) => state.models)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   
   const [editForm, setEditForm] = useState({
     username: '',
@@ -146,10 +144,57 @@ export default function ProfilePage() {
   const fetchUserModels = async () => {
     if (!user) return
     
-    // storeとモックデータから該当ユーザーのモデルを取得
-    const allModels = [...storedModels, ...mockModels]
-    const models = allModels.filter(m => m.userId === user.id)
-    setUserModels(models)
+    try {
+      // Supabaseからユーザーのモデルを取得
+      const { data: supabaseModels, error } = await supabase
+        .from('models')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'public')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('Error fetching user models:', error)
+        setUserModels([])
+      } else if (supabaseModels) {
+        // Supabaseのデータを適切な形式に変換
+        const formattedModels: Model[] = supabaseModels.map(model => ({
+          id: model.id,
+          userId: model.user_id,
+          title: model.title,
+          description: model.description || '',
+          thumbnailUrl: model.thumbnail_url || '/placeholder-3d.svg',
+          fileUrl: model.file_url,
+          previewUrl: model.preview_url,
+          originalFileUrl: model.original_file_url,
+          metadata: model.metadata || {},
+          tags: model.tags || [],
+          viewCount: model.view_count || 0,
+          downloadCount: model.download_count || 0,
+          likeCount: model.like_count || 0,
+          createdAt: model.created_at,
+          updatedAt: model.updated_at || model.created_at,
+          status: model.status || 'public',
+          licenseType: model.license_type || 'CC BY',
+          isCommercialOk: model.is_commercial_ok || false,
+          fileSize: model.file_size || 0,
+          hasAnimation: model.has_animation || false,
+          polygonCount: model.polygon_count,
+          animationDuration: model.animation_duration,
+          // BGMデータを追加
+          musicType: model.bgm_type || (model.metadata?.music_type as string) || undefined,
+          musicUrl: model.bgm_url || (model.metadata?.music_url as string) || undefined,
+          musicName: model.bgm_name || (model.metadata?.music_name as string) || undefined
+        }))
+        
+        setUserModels(formattedModels)
+      } else {
+        setUserModels([])
+      }
+    } catch (error) {
+      console.error('Error fetching user models:', error)
+      setUserModels([])
+    }
   }
 
   useEffect(() => {
@@ -175,12 +220,12 @@ export default function ProfilePage() {
     
   }, [user, authLoading])
   
-  // storedModelsが更新されたら、ユーザーのモデルを更新
+  // ユーザーのモデルを定期的に更新（削除後の反映のため）
   useEffect(() => {
     if (user && !loading) {
       fetchUserModels()
     }
-  }, [storedModels, user, loading])
+  }, [user, loading])
 
   const createProfile = async () => {
     if (!user) return
@@ -282,6 +327,44 @@ export default function ProfilePage() {
       })
     }
     setIsEditing(false)
+  }
+
+  const handleDeleteModel = async (modelId: string) => {
+    if (!confirm('この作品を削除してもよろしいですか？この操作は取り消せません。')) {
+      return
+    }
+
+    setDeletingId(modelId)
+    
+    try {
+      // セッショントークンを取得
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch(`/api/models/${modelId}`, {
+        method: 'DELETE',
+        headers,
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
+        // 削除成功 - モデルリストから削除
+        setUserModels(prev => prev.filter(m => m.id !== modelId))
+        alert('作品を削除しました')
+      } else {
+        alert(`削除に失敗しました: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('削除中にエラーが発生しました')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   // ローディング中
@@ -487,7 +570,21 @@ export default function ProfilePage() {
         {userModels.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {userModels.map((model) => (
-              <ModelCard key={model.id} model={model} showUser={false} />
+              <div key={model.id} className="relative group">
+                <ModelCard model={model} showUser={false} />
+                <button
+                  onClick={() => handleDeleteModel(model.id)}
+                  disabled={deletingId === model.id}
+                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 disabled:bg-gray-400"
+                  title="削除"
+                >
+                  {deletingId === model.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             ))}
           </div>
         ) : (

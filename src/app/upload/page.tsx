@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react'
 import { Info, Tag, Lock, LogIn, Music, Play, Pause, ChevronDown, ChevronUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
-import { Model } from '@/types'
 import { defaultBGMs } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
@@ -26,7 +24,6 @@ const licenses = [
 
 export default function UploadPage() {
   const router = useRouter()
-  const addModel = useStore((state) => state.addModel)
   const { user, loading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [uploadType, setUploadType] = useState<'html' | 'model'>('html')
@@ -231,43 +228,8 @@ export default function UploadPage() {
         // 成功メッセージを表示（オプション）
         console.log('Upload successful:', result)
         
-        // storeにモデルを追加
-        if (result.model) {
-          const newModel: Model = {
-            id: result.model.id || Math.random().toString(36).substr(2, 9),
-            userId: user?.id || 'demo-user',
-            user: {
-              id: user?.id || 'demo-user',
-              username: user?.email?.split('@')[0] || 'demo-user',
-              displayName: user?.email?.split('@')[0] || 'Demo User',
-              avatarUrl: user?.user_metadata?.avatar_url || '/avatars/user-1.jpg',
-              isPremium: false,
-              followerCount: 0,
-              followingCount: 0,
-              createdAt: new Date().toISOString(),
-            },
-            title: result.model.title,
-            description: result.model.description || '',
-            thumbnailUrl: result.model.thumbnail_url || '/placeholder-3d.svg',
-            fileUrl: result.model.file_url,
-            fileSize: result.model.file_size || 0,
-            polygonCount: result.model.polygon_count || 0,
-            hasAnimation: result.model.has_animation || false,
-            animationDuration: result.model.animation_duration || 0,
-            licenseType: result.model.license_type || 'CC BY',
-            isCommercialOk: result.model.is_commercial_ok !== false,
-            viewCount: 0,
-            downloadCount: 0,
-            likeCount: 0,
-            status: 'public' as const,
-            tags: result.model.tags || [],
-            metadata: result.model.metadata || {},
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-          addModel(newModel)
-        }
-        
+        // Supabaseにアップロードが成功した場合のみ、ホームページにリダイレクト
+        // ローカルストアへの追加は行わない（Supabaseから取得するため）
         router.push('/')
       } else {
         // エラーメッセージを表示
