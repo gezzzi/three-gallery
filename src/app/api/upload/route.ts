@@ -91,6 +91,14 @@ export async function POST(request: NextRequest) {
     const musicFile = formData.get('musicFile') as File | null
     const selectedBgmId = formData.get('selectedBgmId') as string
     
+    console.log('[Upload API] 音楽データ受信:', {
+      musicType,
+      musicFileName: musicFile?.name,
+      musicFileSize: musicFile?.size,
+      selectedBgmId,
+      hasMusicFile: !!musicFile
+    })
+    
     // 認証されたユーザーIDを使用
     const userId = user.id
     
@@ -133,17 +141,19 @@ export async function POST(request: NextRequest) {
     // アップロードタイプに応じたデータ作成
     interface ModelData {
       file_url: string
+      preview_url?: string
+      original_file_url?: string
       thumbnail_url: string
       file_size?: number
+      bgm_type?: string
+      bgm_url?: string
+      bgm_name?: string
       metadata: {
         type: string
         code?: string
         htmlContent?: string
         fileName?: string
         fileSize?: number
-        music_url?: string
-        music_type?: string
-        music_name?: string
         music_id?: string
       }
     }
@@ -155,7 +165,9 @@ export async function POST(request: NextRequest) {
       const code = formData.get('code') as string
       modelData = {
         file_url: 'threejs-code',
+        preview_url: 'threejs-code',
         thumbnail_url: '/placeholder-code.svg',
+        file_size: new Blob([code]).size,
         metadata: {
           type: 'threejs-code',
           code: code
@@ -164,7 +176,9 @@ export async function POST(request: NextRequest) {
     } else if (uploadType === 'html') {
       modelData = {
         file_url: 'threejs-html',
+        preview_url: 'threejs-html',
         thumbnail_url: '/placeholder-html.svg',
+        file_size: new Blob([htmlContent]).size,
         metadata: {
           type: 'threejs-html',
           htmlContent: htmlContent
@@ -175,9 +189,14 @@ export async function POST(request: NextRequest) {
       const fileName = (modelFile as File)?.name || 'model.glb'
       const fileSize = (modelFile as File)?.size || 0
       
+      // ファイル名をサニタイズ（特殊文字を除去）
+      const sanitizedFileName = fileName
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // 特殊文字をアンダースコアに置換
+        .replace(/_{2,}/g, '_') // 連続するアンダースコアを1つに
+      
       // ファイル名をユニークにするためにタイムスタンプを追加
       const timestamp = Date.now()
-      const uniqueFileName = `${userId}/${timestamp}_${fileName}`
+      const uniqueFileName = `${userId}/${timestamp}_${sanitizedFileName}`
       
       // Supabaseストレージにファイルをアップロード
       const arrayBuffer = await modelFile.arrayBuffer()
@@ -202,7 +221,9 @@ export async function POST(request: NextRequest) {
       
       modelData = {
         file_url: publicUrlData.publicUrl,
-        thumbnail_url: '/placeholder-3d.svg',
+        preview_url: publicUrlData.publicUrl, // 3DモデルのプレビューURLは同じ
+        original_file_url: publicUrlData.publicUrl, // オリジナルファイルURL
+        thumbnail_url: '/placeholder-3d.svg', // TODO: サムネイル生成機能を実装
         file_size: fileSize,
         metadata: {
           type: '3d-model',
@@ -212,14 +233,24 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // 音楽ファイルの処理（metadataに保存）
+    console.log('[Upload API] 音楽処理開始前のmodelData:', modelData)
+    
+    // 音楽ファイルの処理（直接カラムに保存）
     if (musicType === 'upload' && musicFile) {
+      console.log('[Upload API] 音楽ファイルアップロード開始:', musicFile.name)
       // アップロードされた音楽ファイルの処理
       const musicFileName = musicFile.name
       
+      // ファイル名をサニタイズ（特殊文字を除去）
+      const sanitizedFileName = musicFileName
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // 特殊文字をアンダースコアに置換
+        .replace(/_{2,}/g, '_') // 連続するアンダースコアを1つに
+      
       // ファイル名をユニークにするためにタイムスタンプを追加
       const timestamp = Date.now()
-      const uniqueMusicFileName = `${userId}/music/${timestamp}_${musicFileName}`
+      const uniqueMusicFileName = `${userId}/music/${timestamp}_${sanitizedFileName}`
+      
+      console.log('[Upload API] 音楽ファイルパス:', uniqueMusicFileName)
       
       // Supabaseストレージに音楽ファイルをアップロード
       const musicArrayBuffer = await musicFile.arrayBuffer()
@@ -231,31 +262,50 @@ export async function POST(request: NextRequest) {
         })
       
       if (musicUploadError) {
-        console.error('Music upload error:', musicUploadError)
+        console.error('[Upload API] 音楽アップロードエラー:', musicUploadError)
         // 音楽のアップロードが失敗しても続行（オプショナル）
         if (modelData) {
-          modelData.metadata.music_type = 'none'
+          modelData.bgm_type = 'none'
         }
       } else {
+        console.log('[Upload API] 音楽アップロード成功:', musicUploadData)
         // 公開URLを取得
         const { data: musicPublicUrlData } = supabase.storage
           .from('music')
           .getPublicUrl(uniqueMusicFileName)
         
+        console.log('[Upload API] 音楽公開URL:', musicPublicUrlData.publicUrl)
+        
         if (modelData) {
-          modelData.metadata.music_url = musicPublicUrlData.publicUrl
-          modelData.metadata.music_type = 'upload'
-          modelData.metadata.music_name = musicFileName.replace(/\.[^/.]+$/, '') // 拡張子を除去
+          modelData.bgm_url = musicPublicUrlData.publicUrl
+          modelData.bgm_type = 'upload'
+          modelData.bgm_name = musicFileName.replace(/\.[^/.]+$/, '') // 拡張子を除去
+          console.log('[Upload API] modelDataにBGM情報設定:', {
+            bgm_url: modelData.bgm_url,
+            bgm_type: modelData.bgm_type,
+            bgm_name: modelData.bgm_name
+          })
         }
       }
     } else if (musicType === 'default' && selectedBgmId) {
+      console.log('[Upload API] デフォルトBGM設定:', selectedBgmId)
       // デフォルトBGMの使用
       const bgm = getDefaultBGM(selectedBgmId)
       if (modelData && bgm) {
-        modelData.metadata.music_url = bgm.url // 実際のURLを保存
-        modelData.metadata.music_type = 'default'
-        modelData.metadata.music_name = bgm.name
-        modelData.metadata.music_id = selectedBgmId // IDも保存
+        modelData.bgm_url = bgm.url // 実際のURLを保存
+        modelData.bgm_type = 'default'
+        modelData.bgm_name = bgm.name
+        modelData.metadata.music_id = selectedBgmId // IDはmetadataに保存
+        console.log('[Upload API] デフォルトBGM設定完了:', {
+          bgm_url: modelData.bgm_url,
+          bgm_type: modelData.bgm_type,
+          bgm_name: modelData.bgm_name
+        })
+      }
+    } else {
+      console.log('[Upload API] BGM設定なし - musicType:', musicType, 'selectedBgmId:', selectedBgmId)
+      if (modelData) {
+        modelData.bgm_type = 'none'
       }
     }
 

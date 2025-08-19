@@ -31,6 +31,7 @@ export default function MusicPlayer({
 
   // 音楽URLが変更されたら停止して新しい音楽を読み込む
   useEffect(() => {
+    console.log('[MusicPlayer] musicUrlが変更されました:', musicUrl)
     if (audioRef.current) {
       audioRef.current.pause()
       setIsPlaying(false)
@@ -38,6 +39,7 @@ export default function MusicPlayer({
       setError(null)
       
       if (musicUrl) {
+        console.log('[MusicPlayer] 音楽を読み込み中...')
         audioRef.current.load()
       }
     }
@@ -46,7 +48,9 @@ export default function MusicPlayer({
   // ボリューム設定
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume
+      const newVolume = isMuted ? 0 : volume
+      audioRef.current.volume = newVolume
+      console.log('[MusicPlayer] ボリュームを設定:', { newVolume, isMuted, volume })
     }
   }, [volume, isMuted])
 
@@ -60,19 +64,63 @@ export default function MusicPlayer({
   }, [autoPlay, musicUrl, isLoading])
 
   const handlePlayPause = () => {
-    if (!audioRef.current || !musicUrl) return
+    if (!audioRef.current || !musicUrl) {
+      console.log('[MusicPlayer] audioRefまたはmusicUrlが存在しません', { audioRef: !!audioRef.current, musicUrl })
+      return
+    }
+
+    console.log('[MusicPlayer] 再生/一時停止を実行', { 
+      isPlaying, 
+      volume: audioRef.current.volume,
+      muted: audioRef.current.muted,
+      src: audioRef.current.src,
+      readyState: audioRef.current.readyState,
+      paused: audioRef.current.paused
+    })
 
     if (isPlaying) {
       audioRef.current.pause()
       setIsPlaying(false)
       onPause?.()
     } else {
-      audioRef.current.play().catch(err => {
-        console.error('再生エラー:', err)
-        setError('音楽の再生に失敗しました')
+      // 再生前に現在のaudioの状態を確認
+      console.log('[MusicPlayer] 再生前のaudio要素の状態:', {
+        currentTime: audioRef.current.currentTime,
+        duration: audioRef.current.duration,
+        ended: audioRef.current.ended,
+        error: audioRef.current.error,
+        networkState: audioRef.current.networkState,
+        paused: audioRef.current.paused,
+        playbackRate: audioRef.current.playbackRate,
+        played: audioRef.current.played,
+        readyState: audioRef.current.readyState,
+        seekable: audioRef.current.seekable,
+        seeking: audioRef.current.seeking,
+        src: audioRef.current.src,
+        volume: audioRef.current.volume,
+        muted: audioRef.current.muted
       })
-      setIsPlaying(true)
-      onPlay?.()
+      
+      audioRef.current.play().then(() => {
+        console.log('[MusicPlayer] 再生が開始されました')
+        console.log('[MusicPlayer] 再生中のaudio要素の状態:', {
+          currentTime: audioRef.current?.currentTime,
+          paused: audioRef.current?.paused,
+          volume: audioRef.current?.volume,
+          muted: audioRef.current?.muted
+        })
+        setIsPlaying(true)
+        onPlay?.()
+      }).catch(err => {
+        console.error('[MusicPlayer] 再生エラー:', err)
+        console.error('[MusicPlayer] エラー詳細:', {
+          name: err.name,
+          message: err.message,
+          code: err.code
+        })
+        setError('音楽の再生に失敗しました')
+        setIsPlaying(false)
+      })
     }
   }
 
@@ -80,6 +128,11 @@ export default function MusicPlayer({
     const newVolume = parseFloat(e.target.value)
     setVolume(newVolume)
     setIsMuted(false)
+    console.log('[MusicPlayer] ボリューム変更:', {
+      newVolume,
+      audioVolume: audioRef.current?.volume,
+      isPlaying: audioRef.current ? !audioRef.current.paused : false
+    })
   }
 
   const toggleMute = () => {
@@ -93,11 +146,23 @@ export default function MusicPlayer({
   }
 
   const handleLoadedData = () => {
+    console.log('[MusicPlayer] 音楽データの読み込みが完了しました', {
+      duration: audioRef.current?.duration,
+      volume: audioRef.current?.volume,
+      src: audioRef.current?.src
+    })
     setIsLoading(false)
     setError(null)
   }
 
-  const handleError = () => {
+  const handleError = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    console.error('[MusicPlayer] 音楽ファイルの読み込みエラー:', {
+      src: audioRef.current?.src,
+      error: audioRef.current?.error,
+      networkState: audioRef.current?.networkState,
+      readyState: audioRef.current?.readyState,
+      event: e
+    })
     setIsLoading(false)
     setError('音楽ファイルの読み込みに失敗しました')
     setIsPlaying(false)
@@ -117,9 +182,18 @@ export default function MusicPlayer({
         ref={audioRef}
         src={musicUrl}
         loop
+        className="music-player-audio"
         onLoadedData={handleLoadedData}
         onError={handleError}
         onEnded={() => setIsPlaying(false)}
+        onPlay={() => {
+          console.log('[MusicPlayer] onPlayイベント発生 - 実際に再生が開始されました')
+          setIsPlaying(true)
+        }}
+        onPause={() => {
+          console.log('[MusicPlayer] onPauseイベント発生 - 実際に一時停止されました')
+          setIsPlaying(false)
+        }}
       />
 
       {/* 再生/停止ボタン */}

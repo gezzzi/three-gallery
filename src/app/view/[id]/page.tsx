@@ -13,6 +13,7 @@ import { useStore } from '@/store/useStore'
 import { useBookmark } from '@/hooks/useBookmark'
 import { useLike } from '@/hooks/useLike'
 import { getDefaultBGM } from '@/lib/defaultBgm'
+import { supabase } from '@/lib/supabase'
 
 // 3Dビューアを動的インポート（SSR無効化）
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
@@ -46,56 +47,158 @@ export default function ViewPage() {
   const { isLiked, toggleLike, likeCount } = useLike(params.id as string)
 
   useEffect(() => {
-    // storeとモックデータから該当モデルを取得
-    const allModels = [...storedModels, ...mockModels]
-    const foundModel = allModels.find(m => m.id === params.id)
-    if (foundModel) {
-      setModel(foundModel)
-      // 関連モデルを取得（同じユーザーの他の作品）
-      setRelatedModels(allModels.filter(m => m.userId === foundModel.userId && m.id !== foundModel.id))
-      // 閲覧履歴に追加
-      addToHistory(foundModel.id)
+    const fetchModel = async () => {
+      // Supabaseからモデルを取得
+      const { data: supabaseModel, error } = await supabase
+        .from('models')
+        .select('*')
+        .eq('id', params.id)
+        .single()
       
-      // 音楽のURLを設定（metadataから取得）
-      const metadata = foundModel.metadata as Record<string, unknown>
-      if (metadata?.music_type === 'default') {
-        // 新しい形式: URLが直接保存されている場合
-        if (metadata?.music_url && (metadata.music_url as string).startsWith('/')) {
+      let foundModel: Model | null = null
+      
+      if (!error && supabaseModel) {
+        // SupabaseのデータをModel形式に変換
+        foundModel = {
+          id: supabaseModel.id,
+          userId: supabaseModel.user_id,
+          title: supabaseModel.title,
+          description: supabaseModel.description || '',
+          thumbnailUrl: supabaseModel.thumbnail_url || '/placeholder-3d.svg',
+          fileUrl: supabaseModel.file_url,
+          previewUrl: supabaseModel.preview_url,
+          originalFileUrl: supabaseModel.original_file_url,
+          metadata: supabaseModel.metadata || {},
+          tags: supabaseModel.tags || [],
+          viewCount: supabaseModel.view_count || 0,
+          downloadCount: supabaseModel.download_count || 0,
+          likeCount: supabaseModel.like_count || 0,
+          createdAt: supabaseModel.created_at,
+          updatedAt: supabaseModel.updated_at || supabaseModel.created_at,
+          status: supabaseModel.status || 'public',
+          licenseType: supabaseModel.license_type || 'CC BY',
+          isCommercialOk: supabaseModel.is_commercial_ok || false,
+          fileSize: supabaseModel.file_size || 0,
+          hasAnimation: supabaseModel.has_animation || false,
+          polygonCount: supabaseModel.polygon_count,
+          animationDuration: supabaseModel.animation_duration,
+          // BGMデータ
+          musicType: supabaseModel.bgm_type || (supabaseModel.metadata?.music_type as string) || undefined,
+          musicUrl: supabaseModel.bgm_url || (supabaseModel.metadata?.music_url as string) || undefined,
+          musicName: supabaseModel.bgm_name || (supabaseModel.metadata?.music_name as string) || undefined
+        }
+      } else {
+        // Supabaseから取得できない場合はローカルデータを使用
+        const allModels = [...storedModels, ...mockModels]
+        foundModel = allModels.find(m => m.id === params.id) || null
+      }
+      
+      if (foundModel) {
+        setModel(foundModel)
+        // 関連モデルを取得
+        const { data: relatedData } = await supabase
+          .from('models')
+          .select('*')
+          .eq('user_id', foundModel.userId)
+          .neq('id', foundModel.id)
+          .limit(6)
+        
+        if (relatedData) {
+          const formattedRelated = relatedData.map(model => ({
+            id: model.id,
+            userId: model.user_id,
+            title: model.title,
+            description: model.description || '',
+            thumbnailUrl: model.thumbnail_url || '/placeholder-3d.svg',
+            fileUrl: model.file_url,
+            previewUrl: model.preview_url,
+            originalFileUrl: model.original_file_url,
+            metadata: model.metadata || {},
+            tags: model.tags || [],
+            viewCount: model.view_count || 0,
+            downloadCount: model.download_count || 0,
+            likeCount: model.like_count || 0,
+            createdAt: model.created_at,
+            updatedAt: model.updated_at || model.created_at,
+            status: model.status || 'public',
+            licenseType: model.license_type || 'CC BY',
+            isCommercialOk: model.is_commercial_ok || false,
+            fileSize: model.file_size || 0,
+            hasAnimation: model.has_animation || false,
+            polygonCount: model.polygon_count,
+            animationDuration: model.animation_duration
+          })) as Model[]
+          setRelatedModels(formattedRelated)
+        }
+        
+        // 閲覧履歴に追加
+        addToHistory(foundModel.id)
+        
+        // 音楽のURLを設定
+        const metadata = foundModel.metadata as Record<string, unknown>
+        
+        // 音楽のURLを設定
+        console.log('[ViewPage] BGMデータを確認:', {
+          musicType: foundModel.musicType,
+          musicUrl: foundModel.musicUrl,
+          musicName: foundModel.musicName,
+          bgm_type: supabaseModel?.bgm_type,
+          bgm_url: supabaseModel?.bgm_url,
+          bgm_name: supabaseModel?.bgm_name,
+          metadata: metadata,
+          music_id: metadata?.music_id,
+          music_type: metadata?.music_type,
+          music_url: metadata?.music_url
+        })
+        
+        // BGMカラムから直接取得（優先）
+        if (foundModel.musicType === 'default') {
+          // metadataにmusicl_idがある場合
+          if (metadata?.music_id) {
+            const bgm = getDefaultBGM(metadata.music_id as string)
+            console.log('[ViewPage] デフォルトBGMを取得 (music_id):', bgm)
+            if (bgm) {
+              setMusicUrl(bgm.url)
+              setMusicName(bgm.name)
+            }
+          }
+          // bgm_urlが直接保存されている場合
+          else if (foundModel.musicUrl) {
+            console.log('[ViewPage] BGM URLが直接保存されています:', foundModel.musicUrl)
+            setMusicUrl(foundModel.musicUrl)
+            setMusicName(foundModel.musicName || 'デフォルトBGM')
+          }
+        } else if (foundModel.musicType === 'upload' && foundModel.musicUrl) {
+          console.log('[ViewPage] アップロードBGM:', foundModel.musicUrl)
+          setMusicUrl(foundModel.musicUrl)
+          setMusicName(foundModel.musicName || 'アップロードされたBGM')
+        }
+        // metadataから取得（互換性のため）
+        else if (metadata?.music_type === 'default') {
+          if (metadata?.music_id) {
+            const bgm = getDefaultBGM(metadata.music_id as string)
+            console.log('[ViewPage] デフォルトBGMを取得 (metadata.music_id):', bgm)
+            if (bgm) {
+              setMusicUrl(bgm.url)
+              setMusicName(bgm.name)
+            }
+          } else if (metadata?.music_url) {
+            console.log('[ViewPage] BGM URLがmetadataに保存されています:', metadata.music_url)
+            setMusicUrl(metadata.music_url as string)
+            setMusicName((metadata.music_name as string) || 'デフォルトBGM')
+          }
+        } else if (metadata?.music_type === 'upload' && metadata?.music_url) {
+          console.log('[ViewPage] アップロードBGM (metadata):', metadata.music_url)
           setMusicUrl(metadata.music_url as string)
-          setMusicName((metadata.music_name as string) || 'デフォルトBGM')
+          setMusicName((metadata.music_name as string) || 'アップロードされたBGM')
         }
-        // 古い形式: IDが保存されている場合
-        else if (metadata?.music_url) {
-          const bgm = getDefaultBGM(metadata.music_url as string)
-          if (bgm) {
-            setMusicUrl(bgm.url)
-            setMusicName(bgm.name)
-          }
-        }
-        // music_idが保存されている場合
-        else if (metadata?.music_id) {
-          const bgm = getDefaultBGM(metadata.music_id as string)
-          if (bgm) {
-            setMusicUrl(bgm.url)
-            setMusicName(bgm.name)
-          }
-        }
-      } else if (metadata?.music_type === 'upload' && metadata?.music_url) {
-        setMusicUrl(metadata.music_url as string)
-        setMusicName((metadata.music_name as string) || 'アップロードされたBGM')
-      } else if (foundModel.musicType === 'default' && foundModel.musicUrl) {
-        // 旧形式のサポート（互換性のため）
-        const bgm = getDefaultBGM(foundModel.musicUrl)
-        if (bgm) {
-          setMusicUrl(bgm.url)
-          setMusicName(bgm.name)
-        }
-      } else if (foundModel.musicType === 'upload' && foundModel.musicUrl) {
-        setMusicUrl(foundModel.musicUrl)
-        setMusicName(foundModel.musicName || 'アップロードされたBGM')
+        
+        // 最終的な音楽設定の確認（この時点ではstateはまだ更新されていない）
       }
     }
-  }, [params.id, storedModels, addToHistory])
+    
+    fetchModel()
+  }, [params.id])
 
   // ページ遷移時に前の音楽を停止
   useEffect(() => {
@@ -107,6 +210,11 @@ export default function ViewPage() {
       }
     }
   }, [params.id])
+
+  // 音楽URLが設定されたことを確認
+  useEffect(() => {
+    console.log('[ViewPage] 音楽URLが更新されました:', { musicUrl, musicName })
+  }, [musicUrl, musicName])
 
   if (!model) {
     return (
@@ -142,14 +250,10 @@ export default function ViewPage() {
             <MusicPlayer
               musicUrl={musicUrl}
               musicName={musicName}
+              autoPlay={false}
               onPlay={() => {
-                // 他の音楽を停止
-                const audios = document.querySelectorAll('audio')
-                audios.forEach(audio => {
-                  if (audio !== currentAudioRef.current) {
-                    audio.pause()
-                  }
-                })
+                // onPlayコールバックは一旦無効化（他の音楽停止機能は後で実装）
+                console.log('[ViewPage] 音楽が再生されました')
               }}
             />
           </div>

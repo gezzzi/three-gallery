@@ -185,10 +185,19 @@ export default function UploadPage() {
       data.append('status', formData.status)
       
       // 音楽関連のデータを追加
+      console.log('[Upload Page] 音楽データ送信:', {
+        musicType,
+        hasMusicFile: !!musicFile,
+        musicFileName: musicFile?.name,
+        selectedBgmId
+      })
+      
       data.append('musicType', musicType)
       if (musicType === 'upload' && musicFile) {
+        console.log('[Upload Page] 音楽ファイルをFormDataに追加:', musicFile.name)
         data.append('musicFile', musicFile)
       } else if (musicType === 'default') {
+        console.log('[Upload Page] デフォルトBGM IDをFormDataに追加:', selectedBgmId)
         data.append('selectedBgmId', selectedBgmId)
       }
       

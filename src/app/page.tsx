@@ -57,27 +57,28 @@ export default function HomePage() {
             userId: model.user_id,
             title: model.title,
             description: model.description || '',
-            authorId: model.user_id,
-            authorName: model.user_id, // プロファイル情報は別途取得が必要
-            authorAvatar: '/default-avatar.jpg',
             thumbnailUrl: model.thumbnail_url || '/placeholder-3d.svg',
             fileUrl: model.file_url,
-            uploadType: model.upload_type || 'model',
+            previewUrl: model.preview_url,
+            originalFileUrl: model.original_file_url,
             metadata: model.metadata || {},
             tags: model.tags || [],
             viewCount: model.view_count || 0,
             downloadCount: model.download_count || 0,
             likeCount: model.like_count || 0,
-            commentCount: 0, // コメント数は別途取得が必要
             createdAt: model.created_at,
             updatedAt: model.updated_at || model.created_at,
             status: model.status || 'public',
             licenseType: model.license_type || 'CC BY',
             isCommercialOk: model.is_commercial_ok || false,
-            isFree: model.is_free !== false,
-            price: model.price || 0,
             fileSize: model.file_size || 0,
-            hasAnimation: model.has_animation || false
+            hasAnimation: model.has_animation || false,
+            polygonCount: model.polygon_count,
+            animationDuration: model.animation_duration,
+            // BGMデータを追加
+            musicType: model.bgm_type || (model.metadata?.music_type as string) || undefined,
+            musicUrl: model.bgm_url || (model.metadata?.music_url as string) || undefined,
+            musicName: model.bgm_name || (model.metadata?.music_name as string) || undefined
           }))
           
           // storeのモデルと結合（ローカルアップロードされたものを含む）
