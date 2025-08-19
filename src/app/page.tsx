@@ -6,6 +6,7 @@ import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { TrendingUp, Clock, Star, Download } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { supabase } from '@/lib/supabase'
 
 const tabs = [
   { id: 'trending', label: 'トレンド', icon: TrendingUp },
@@ -30,18 +31,79 @@ export default function HomePage() {
 
   // モデルの取得とソート処理
   useEffect(() => {
-    setIsLoading(true)
-    
-    // タイマーを使用して状態更新のバッチング
-    const timer = setTimeout(() => {
-      // storeのモデルとモックデータを結合（重複を排除）
-      const allModels = [...storedModels, ...mockModels]
-      const uniqueModels = Array.from(
-        new Map(allModels.map(model => [model.id, model])).values()
-      )
+    const fetchModels = async () => {
+      setIsLoading(true)
       
+      try {
+        // Supabaseからモデルを取得
+        const { data: supabaseModels, error } = await supabase
+          .from('models')
+          .select('*')
+          .eq('status', 'public')
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error('Error fetching models:', error)
+          // エラー時はモックデータを使用
+          const allModels = [...storedModels, ...mockModels]
+          const uniqueModels = Array.from(
+            new Map(allModels.map(model => [model.id, model])).values()
+          )
+          sortAndSetModels(uniqueModels)
+        } else if (supabaseModels) {
+          // Supabaseのデータを適切な形式に変換
+          const formattedModels: Model[] = supabaseModels.map(model => ({
+            id: model.id,
+            userId: model.user_id,
+            title: model.title,
+            description: model.description || '',
+            authorId: model.user_id,
+            authorName: model.user_id, // プロファイル情報は別途取得が必要
+            authorAvatar: '/default-avatar.jpg',
+            thumbnailUrl: model.thumbnail_url || '/placeholder-3d.svg',
+            fileUrl: model.file_url,
+            uploadType: model.upload_type || 'model',
+            metadata: model.metadata || {},
+            tags: model.tags || [],
+            viewCount: model.view_count || 0,
+            downloadCount: model.download_count || 0,
+            likeCount: model.like_count || 0,
+            commentCount: 0, // コメント数は別途取得が必要
+            createdAt: model.created_at,
+            updatedAt: model.updated_at || model.created_at,
+            status: model.status || 'public',
+            licenseType: model.license_type || 'CC BY',
+            isCommercialOk: model.is_commercial_ok || false,
+            isFree: model.is_free !== false,
+            price: model.price || 0,
+            fileSize: model.file_size || 0,
+            hasAnimation: model.has_animation || false
+          }))
+          
+          // storeのモデルと結合（ローカルアップロードされたものを含む）
+          const allModels = [...formattedModels, ...storedModels]
+          const uniqueModels = Array.from(
+            new Map(allModels.map(model => [model.id, model])).values()
+          )
+          sortAndSetModels(uniqueModels)
+        } else {
+          // データがない場合はモックデータを使用
+          sortAndSetModels([...storedModels, ...mockModels])
+        }
+      } catch (error) {
+        console.error('Error in fetchModels:', error)
+        // エラー時はモックデータを使用
+        const allModels = [...storedModels, ...mockModels]
+        const uniqueModels = Array.from(
+          new Map(allModels.map(model => [model.id, model])).values()
+        )
+        sortAndSetModels(uniqueModels)
+      }
+    }
+    
+    const sortAndSetModels = (models: Model[]) => {
       // ソート処理
-      const sortedModels = [...uniqueModels]
+      const sortedModels = [...models]
       
       switch (activeTab) {
         case 'trending':
@@ -66,12 +128,10 @@ export default function HomePage() {
       
       setDisplayModels(sortedModels)
       setIsLoading(false)
-    }, 100)
+    }
     
-    return () => clearTimeout(timer)
-    // storedModelsは意図的に依存配列から除外（新規アップロード時のみ更新されるため）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, timeRange])
+    fetchModels()
+  }, [activeTab, timeRange, storedModels])
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">

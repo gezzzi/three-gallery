@@ -172,13 +172,36 @@ export async function POST(request: NextRequest) {
       }
     } else if (uploadType === 'model') {
       // 3Dモデルファイルの処理
-      // 通常はファイルをストレージにアップロードしてURLを取得しますが、
-      // ここではデモ用にローカルのURLを使用します
       const fileName = (modelFile as File)?.name || 'model.glb'
       const fileSize = (modelFile as File)?.size || 0
       
+      // ファイル名をユニークにするためにタイムスタンプを追加
+      const timestamp = Date.now()
+      const uniqueFileName = `${userId}/${timestamp}_${fileName}`
+      
+      // Supabaseストレージにファイルをアップロード
+      const arrayBuffer = await modelFile.arrayBuffer()
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('models')
+        .upload(uniqueFileName, arrayBuffer, {
+          contentType: modelFile.type || 'model/gltf-binary',
+          upsert: false
+        })
+      
+      if (uploadError) {
+        console.error('Model upload error:', uploadError)
+        return NextResponse.json({ 
+          error: `モデルファイルのアップロードに失敗しました: ${uploadError.message}` 
+        }, { status: 500 })
+      }
+      
+      // 公開URLを取得
+      const { data: publicUrlData } = supabase.storage
+        .from('models')
+        .getPublicUrl(uniqueFileName)
+      
       modelData = {
-        file_url: `/models/${fileName}`, // デモ用のURL
+        file_url: publicUrlData.publicUrl,
         thumbnail_url: '/placeholder-3d.svg',
         file_size: fileSize,
         metadata: {
@@ -192,13 +215,38 @@ export async function POST(request: NextRequest) {
     // 音楽ファイルの処理（metadataに保存）
     if (musicType === 'upload' && musicFile) {
       // アップロードされた音楽ファイルの処理
-      // 通常はストレージにURLをアップロードしてURLを取得しますが、
-      // ここではデモ用にローカルのURLを使用します
       const musicFileName = musicFile.name
-      if (modelData) {
-        modelData.metadata.music_url = `/music/${musicFileName}` // デモ用のURL
-        modelData.metadata.music_type = 'upload'
-        modelData.metadata.music_name = musicFileName.replace(/\.[^/.]+$/, '') // 拡張子を除去
+      
+      // ファイル名をユニークにするためにタイムスタンプを追加
+      const timestamp = Date.now()
+      const uniqueMusicFileName = `${userId}/music/${timestamp}_${musicFileName}`
+      
+      // Supabaseストレージに音楽ファイルをアップロード
+      const musicArrayBuffer = await musicFile.arrayBuffer()
+      const { data: musicUploadData, error: musicUploadError } = await supabase.storage
+        .from('music')
+        .upload(uniqueMusicFileName, musicArrayBuffer, {
+          contentType: musicFile.type || 'audio/mpeg',
+          upsert: false
+        })
+      
+      if (musicUploadError) {
+        console.error('Music upload error:', musicUploadError)
+        // 音楽のアップロードが失敗しても続行（オプショナル）
+        if (modelData) {
+          modelData.metadata.music_type = 'none'
+        }
+      } else {
+        // 公開URLを取得
+        const { data: musicPublicUrlData } = supabase.storage
+          .from('music')
+          .getPublicUrl(uniqueMusicFileName)
+        
+        if (modelData) {
+          modelData.metadata.music_url = musicPublicUrlData.publicUrl
+          modelData.metadata.music_type = 'upload'
+          modelData.metadata.music_name = musicFileName.replace(/\.[^/.]+$/, '') // 拡張子を除去
+        }
       }
     } else if (musicType === 'default' && selectedBgmId) {
       // デフォルトBGMの使用

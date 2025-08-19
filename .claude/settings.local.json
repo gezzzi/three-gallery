@@ -22,7 +22,8 @@
       "mcp__supabase__apply_migration",
       "Bash(for pid in 10008 21568 22556 19460 5536 21132 16596 11416 6240)",
       "Bash(do taskkill //PID $pid //F)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(npx supabase storage ls:*)"
     ]
   },
   "disableAllHooks": true
