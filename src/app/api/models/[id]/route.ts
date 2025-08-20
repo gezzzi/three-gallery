@@ -1,110 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabase-server'
 
-export async function DELETE(
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabase = await createServerClient()
+    const body = await request.json()
     
-    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
-    }
-    
-    // クッキーから認証情報を取得
-    const cookieStore = await cookies()
-    const supabase = createClient(supabaseUrl, supabaseKey)
-    
-    // セッショントークンを取得
-    const accessToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.0')?.value
-    const refreshToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.1')?.value
-    
-    let user = null
-    
-    if (accessToken && refreshToken) {
-      const { data: sessionData } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      })
-      
-      if (sessionData?.session) {
-        user = sessionData.session.user
-      }
-    } else {
-      const authorization = request.headers.get('Authorization')
-      const token = authorization?.replace('Bearer ', '')
-      
-      if (token) {
-        const { data } = await supabase.auth.getUser(token)
-        user = data?.user
-      }
-    }
-    
+    // 認証チェック
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // まず、削除対象のモデルを取得
+    const { id } = await params
+    
+    // モデルの所有者確認
     const { data: model, error: fetchError } = await supabase
       .from('models')
-      .select('*')
+      .select('user_id')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single()
     
     if (fetchError || !model) {
-      return NextResponse.json({ error: 'モデルが見つからないか、削除権限がありません' }, { status: 404 })
+      return NextResponse.json({ error: 'Model not found' }, { status: 404 })
     }
     
-    // ストレージからファイルを削除
-    const deletePromises = []
-    
-    // 3Dモデルファイルの削除
-    if (model.file_url && model.file_url.includes('storage/v1/object/public/models')) {
-      const filePath = model.file_url.split('/models/')[1]
-      if (filePath) {
-        deletePromises.push(
-          supabase.storage.from('models').remove([filePath])
-        )
-      }
+    if (model.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
     
-    // 音楽ファイルの削除
-    if (model.bgm_url && model.bgm_url.includes('storage/v1/object/public/music')) {
-      const musicPath = model.bgm_url.split('/music/')[1]
-      if (musicPath) {
-        deletePromises.push(
-          supabase.storage.from('music').remove([musicPath])
-        )
-      }
-    }
-    
-    // ストレージファイルを削除
-    await Promise.all(deletePromises)
-    
-    // データベースからモデルを削除
-    const { error: deleteError } = await supabase
+    // サムネイルURLの更新
+    const { data: updatedModel, error: updateError } = await supabase
       .from('models')
-      .delete()
+      .update({
+        thumbnail_url: body.thumbnail_url,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
-      .eq('user_id', user.id)
+      .select()
+      .single()
     
-    if (deleteError) {
-      console.error('Delete error:', deleteError)
-      return NextResponse.json({ error: 'モデルの削除に失敗しました' }, { status: 500 })
+    if (updateError) {
+      console.error('Update error:', updateError)
+      return NextResponse.json({ error: 'Failed to update model' }, { status: 500 })
     }
     
-    return NextResponse.json({ success: true, message: 'モデルを削除しました' })
-    
+    return NextResponse.json({
+      success: true,
+      model: updatedModel
+    })
   } catch (error) {
-    console.error('Delete model error:', error)
-    return NextResponse.json(
-      { error: '削除処理中にエラーが発生しました' },
-      { status: 500 }
-    )
+    console.error('Error in model PATCH:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const supabase = await createServerClient()
+    const { id } = await params
+    
+    // モデルの取得
+    const { data: model, error } = await supabase
+      .from('models')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error || !model) {
+      return NextResponse.json({ error: 'Model not found' }, { status: 404 })
+    }
+    
+    // 閲覧数を増やす
+    await supabase
+      .from('models')
+      .update({ view_count: (model.view_count || 0) + 1 })
+      .eq('id', id)
+    
+    return NextResponse.json({ model })
+  } catch (error) {
+    console.error('Error in model GET:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Home, TrendingUp, Users, Bookmark, Heart, Settings, Tag, Clock, ShoppingBag } from 'lucide-react'
+import { Home, TrendingUp, Users, Bookmark, Heart, Settings, Tag, Clock } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,6 @@ const menuItems = [
   { icon: Bookmark, label: 'ブックマーク', href: '/bookmarks' },
   { icon: Heart, label: 'いいね', href: '/likes' },
   { icon: Clock, label: '履歴', href: '/history' },
-  { icon: ShoppingBag, label: '購入', href: '/purchases' },
   { icon: Settings, label: '設定', href: '/settings' },
 ]
 
@@ -112,7 +111,7 @@ export default function Sidebar() {
       {/* フッター */}
       <div className="p-4 text-xs text-gray-500">
         <div className="space-y-1">
-          <Link href="/about" className="hover:text-gray-700">会社概要</Link>
+          <Link href="/about" className="hover:text-gray-700">運営者</Link>
           <span className="mx-1">·</span>
           <Link href="/terms" className="hover:text-gray-700">利用規約</Link>
           <span className="mx-1">·</span>

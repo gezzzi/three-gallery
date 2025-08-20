@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { Model, User } from '@/types'
+import { Model, User, Notification } from '@/types'
 
 interface StoreState {
   // ユーザー関連
@@ -61,6 +61,16 @@ interface StoreState {
   }
   setFilter: (key: string, value: unknown) => void
   clearFilters: () => void
+  
+  // 通知
+  notifications: Notification[]
+  unreadNotificationCount: number
+  setNotifications: (notifications: Notification[]) => void
+  addNotification: (notification: Notification) => void
+  markNotificationAsRead: (notificationId: string) => void
+  markAllNotificationsAsRead: () => void
+  deleteNotification: (notificationId: string) => void
+  clearNotifications: () => void
 }
 
 export const useStore = create<StoreState>()(
@@ -153,7 +163,41 @@ export const useStore = create<StoreState>()(
       setFilter: (key, value) => set((state) => ({
         filters: { ...state.filters, [key]: value }
       })),
-      clearFilters: () => set({ filters: {} })
+      clearFilters: () => set({ filters: {} }),
+      
+      // 通知
+      notifications: [],
+      unreadNotificationCount: 0,
+      setNotifications: (notifications) => set({ 
+        notifications,
+        unreadNotificationCount: notifications.filter(n => !n.isRead).length
+      }),
+      addNotification: (notification) => set((state) => ({
+        notifications: [notification, ...state.notifications],
+        unreadNotificationCount: state.unreadNotificationCount + (notification.isRead ? 0 : 1)
+      })),
+      markNotificationAsRead: (notificationId) => set((state) => {
+        const updatedNotifications = state.notifications.map(n =>
+          n.id === notificationId ? { ...n, isRead: true } : n
+        )
+        return {
+          notifications: updatedNotifications,
+          unreadNotificationCount: updatedNotifications.filter(n => !n.isRead).length
+        }
+      }),
+      markAllNotificationsAsRead: () => set((state) => ({
+        notifications: state.notifications.map(n => ({ ...n, isRead: true })),
+        unreadNotificationCount: 0
+      })),
+      deleteNotification: (notificationId) => set((state) => {
+        const notification = state.notifications.find(n => n.id === notificationId)
+        const updatedNotifications = state.notifications.filter(n => n.id !== notificationId)
+        return {
+          notifications: updatedNotifications,
+          unreadNotificationCount: state.unreadNotificationCount - (notification && !notification.isRead ? 1 : 0)
+        }
+      }),
+      clearNotifications: () => set({ notifications: [], unreadNotificationCount: 0 })
     }),
     {
       name: 'three-gallery-storage',

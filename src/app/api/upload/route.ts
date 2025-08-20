@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getDefaultBGM } from '@/lib/defaultBgm'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@/lib/supabase-server'
 
 export async function POST(request: NextRequest) {
   console.log('[Upload API] リクエスト受信')
@@ -27,49 +26,13 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // クッキーから認証情報を取得
-    const cookieStore = await cookies()
-    
     // Supabaseクライアントの作成
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = await createServerClient()
     
-    // クッキーからセッショントークンを取得して設定
-    const accessToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.0')?.value
-    const refreshToken = cookieStore.get('sb-gtucwdrowzybvmviqwxb-auth-token.1')?.value
+    // 認証チェック
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    console.log('[Upload API] トークン取得:', !!accessToken, !!refreshToken)
-    
-    let user = null
-    let authError = null
-    
-    if (accessToken && refreshToken) {
-      // セッションを設定
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      })
-      
-      if (sessionData?.session) {
-        user = sessionData.session.user
-        console.log('[Upload API] セッション設定成功:', user?.email)
-      } else {
-        authError = sessionError
-      }
-    } else {
-      // Authorizationヘッダーからトークンを取得
-      const authorization = request.headers.get('Authorization')
-      const token = authorization?.replace('Bearer ', '')
-      
-      if (token) {
-        const { data, error } = await supabase.auth.getUser(token)
-        user = data?.user
-        authError = error
-      } else {
-        authError = new Error('認証情報が見つかりません')
-      }
-    }
-    
-    console.log('[Upload API] 最終的なユーザー:', user?.email, 'エラー:', authError?.message)
+    console.log('[Upload API] ユーザー:', user?.email, 'エラー:', authError?.message)
     
     if (authError || !user) {
       console.error('[Upload API] 認証エラー:', authError)
@@ -90,6 +53,10 @@ export async function POST(request: NextRequest) {
     const musicType = formData.get('musicType') as string
     const musicFile = formData.get('musicFile') as File | null
     const selectedBgmId = formData.get('selectedBgmId') as string
+    
+    // サムネイル関連のデータを取得
+    const thumbnailOption = formData.get('thumbnailOption') as string
+    const customThumbnailUrl = formData.get('thumbnailUrl') as string | null
     
     console.log('[Upload API] 音楽データ受信:', {
       musicType,
@@ -166,7 +133,7 @@ export async function POST(request: NextRequest) {
       modelData = {
         file_url: 'threejs-code',
         preview_url: 'threejs-code',
-        thumbnail_url: '/placeholder-code.svg',
+        thumbnail_url: customThumbnailUrl || '/placeholder-code.svg',
         file_size: new Blob([code]).size,
         metadata: {
           type: 'threejs-code',
@@ -177,7 +144,7 @@ export async function POST(request: NextRequest) {
       modelData = {
         file_url: 'threejs-html',
         preview_url: 'threejs-html',
-        thumbnail_url: '/placeholder-html.svg',
+        thumbnail_url: customThumbnailUrl || '/placeholder-html.svg',
         file_size: new Blob([htmlContent]).size,
         metadata: {
           type: 'threejs-html',
@@ -223,7 +190,7 @@ export async function POST(request: NextRequest) {
         file_url: publicUrlData.publicUrl,
         preview_url: publicUrlData.publicUrl, // 3DモデルのプレビューURLは同じ
         original_file_url: publicUrlData.publicUrl, // オリジナルファイルURL
-        thumbnail_url: '/placeholder-3d.svg', // TODO: サムネイル生成機能を実装
+        thumbnail_url: customThumbnailUrl || '/placeholder-3d.svg',
         file_size: fileSize,
         metadata: {
           type: '3d-model',
@@ -356,6 +323,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       model,
+      modelId: model.id,
       message: 'アップロードが完了しました'
     })
 

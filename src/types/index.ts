@@ -74,3 +74,22 @@ export interface Transaction {
   status: 'pending' | 'completed' | 'failed'
   createdAt: string
 }
+
+export interface Notification {
+  id: string
+  userId: string
+  type: 'new_follower' | 'like' | 'bookmark' | 'download' | 'new_upload' | 'view_milestone' | 'system'
+  title: string
+  message: string
+  data: {
+    fromUserId?: string
+    fromUserName?: string
+    modelId?: string
+    modelTitle?: string
+    milestone?: number
+    currentViews?: number
+    [key: string]: unknown
+  }
+  isRead: boolean
+  createdAt: string
+}

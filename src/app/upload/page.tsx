@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Info, Tag, Lock, LogIn, Music, Play, Pause, ChevronDown, ChevronUp } from 'lucide-react'
+import { Info, Tag, Lock, LogIn, Music, Play, Pause, ChevronDown, ChevronUp, Image, Camera } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/contexts/AuthContext'
 import { defaultBGMs } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
+import { generateModelThumbnail, generateCodeThumbnail, generateHtmlThumbnail } from '@/lib/thumbnailGenerator'
 
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), { ssr: false })
@@ -45,6 +46,10 @@ export default function UploadPage() {
   const [selectedBgmId, setSelectedBgmId] = useState<string>('ambient-1')
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null)
   const [isBgmListOpen, setIsBgmListOpen] = useState(false)
+  const [thumbnailOption, setThumbnailOption] = useState<'auto' | 'custom'>('auto')
+  const [customThumbnail, setCustomThumbnail] = useState<File | null>(null)
+  const [customThumbnailUrl, setCustomThumbnailUrl] = useState<string | null>(null)
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
 
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +87,24 @@ export default function UploadPage() {
         setMusicFile(file)
       } else {
         alert('MP3、WAV、OGG、またはM4A形式のファイルをアップロードしてください')
+      }
+    }
+  }
+
+  const handleCustomThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      if (validTypes.includes(file.type)) {
+        if (file.size > 5 * 1024 * 1024) { // 5MB制限
+          alert('サムネイル画像は5MB以下にしてください')
+          return
+        }
+        setCustomThumbnail(file)
+        const url = URL.createObjectURL(file)
+        setCustomThumbnailUrl(url)
+      } else {
+        alert('JPEG、PNG、またはWebP形式の画像をアップロードしてください')
       }
     }
   }
@@ -172,6 +195,34 @@ export default function UploadPage() {
     setIsUploading(true)
     
     try {
+      // サムネイルの処理
+      let thumbnailUrl = null
+      
+      if (thumbnailOption === 'custom' && customThumbnail) {
+        // カスタムサムネイルをアップロード
+        console.log('[Upload] カスタムサムネイルをアップロード')
+        const thumbnailFormData = new FormData()
+        thumbnailFormData.append('file', customThumbnail)
+        thumbnailFormData.append('type', 'custom')
+        
+        const thumbnailResponse = await fetch('/api/upload/thumbnail', {
+          method: 'POST',
+          body: thumbnailFormData
+        })
+        
+        if (thumbnailResponse.ok) {
+          const thumbnailData = await thumbnailResponse.json()
+          thumbnailUrl = thumbnailData.url
+          console.log('[Upload] カスタムサムネイルアップロード成功:', thumbnailUrl)
+        } else {
+          console.error('[Upload] カスタムサムネイルアップロード失敗')
+        }
+      } else if (thumbnailOption === 'auto') {
+        // 自動生成フラグを設定（実際の生成はアップロード後に行う）
+        console.log('[Upload] サムネイル自動生成フラグを設定')
+        setIsGeneratingThumbnail(true)
+      }
+      
       const data = new FormData()
       data.append('uploadType', uploadType)
       data.append('title', formData.title)
@@ -180,6 +231,12 @@ export default function UploadPage() {
       data.append('license', formData.license)
       data.append('isCommercialOk', formData.isCommercialOk.toString())
       data.append('status', formData.status)
+      
+      // サムネイル情報を追加
+      data.append('thumbnailOption', thumbnailOption)
+      if (thumbnailUrl) {
+        data.append('thumbnailUrl', thumbnailUrl)
+      }
       
       // 音楽関連のデータを追加
       console.log('[Upload Page] 音楽データ送信:', {
@@ -225,14 +282,64 @@ export default function UploadPage() {
       const result = await response.json()
       
       if (result.success) {
-        // 成功メッセージを表示（オプション）
         console.log('Upload successful:', result)
         
-        // Supabaseにアップロードが成功した場合のみ、ホームページにリダイレクト
-        // ローカルストアへの追加は行わない（Supabaseから取得するため）
+        // サムネイル自動生成が必要な場合
+        if (thumbnailOption === 'auto' && result.modelId) {
+          setIsGeneratingThumbnail(true)
+          console.log('[Upload] サムネイル自動生成開始')
+          
+          try {
+            let thumbnailBlob: Blob | null = null
+            
+            // アップロードタイプに応じてサムネイルを生成
+            if (uploadType === 'model' && modelUrl) {
+              thumbnailBlob = await generateModelThumbnail(modelUrl)
+            } else if (uploadType === 'html') {
+              thumbnailBlob = await generateHtmlThumbnail(htmlContent)
+            }
+            
+            if (thumbnailBlob) {
+              // 生成したサムネイルをアップロード
+              const thumbnailFormData = new FormData()
+              thumbnailFormData.append('file', thumbnailBlob, 'thumbnail.jpg')
+              thumbnailFormData.append('type', 'auto-generated')
+              
+              const thumbnailResponse = await fetch('/api/upload/thumbnail', {
+                method: 'POST',
+                body: thumbnailFormData,
+                headers
+              })
+              
+              if (thumbnailResponse.ok) {
+                const thumbnailData = await thumbnailResponse.json()
+                
+                // モデルのthumbnail_urlを更新
+                await fetch(`/api/models/${result.modelId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...headers
+                  },
+                  body: JSON.stringify({
+                    thumbnail_url: thumbnailData.url
+                  })
+                })
+                
+                console.log('[Upload] サムネイル自動生成・更新完了')
+              }
+            }
+          } catch (error) {
+            console.error('[Upload] サムネイル自動生成エラー:', error)
+            // サムネイル生成に失敗してもアップロード自体は成功とする
+          } finally {
+            setIsGeneratingThumbnail(false)
+          }
+        }
+        
+        // ホームページにリダイレクト
         router.push('/')
       } else {
-        // エラーメッセージを表示
         console.error('Upload failed:', result.error)
         alert(`アップロードに失敗しました: ${result.error}`)
         setIsUploading(false)
@@ -413,6 +520,84 @@ export default function UploadPage() {
             )}
           </div>
         )}
+
+        {/* サムネイル設定 */}
+        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <Image className="h-4 w-4 sm:h-5 sm:w-5" />
+            サムネイル設定
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="auto"
+                  checked={thumbnailOption === 'auto'}
+                  onChange={(e) => setThumbnailOption(e.target.value as 'auto' | 'custom')}
+                  className="h-4 w-4"
+                />
+                <span className="flex items-center gap-1">
+                  <Camera className="h-4 w-4" />
+                  自動生成
+                </span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="custom"
+                  checked={thumbnailOption === 'custom'}
+                  onChange={(e) => setThumbnailOption(e.target.value as 'auto' | 'custom')}
+                  className="h-4 w-4"
+                />
+                <span className="flex items-center gap-1">
+                  <Image className="h-4 w-4" />
+                  カスタム画像をアップロード
+                </span>
+              </label>
+            </div>
+            
+            {thumbnailOption === 'auto' ? (
+              <div className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm text-gray-600">
+                  アップロード時に3Dシーンから自動的に高品質なサムネイルを生成します。
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  • 解像度: 1200x630px
+                  • 最適な角度で自動撮影
+                  • 高品質レンダリング
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  サムネイル画像 (JPEG, PNG, WebP)
+                </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleCustomThumbnailUpload}
+                  className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                />
+                {customThumbnail && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-sm text-gray-600">
+                      ファイル: {customThumbnail.name} ({(customThumbnail.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                    {customThumbnailUrl && (
+                      <img
+                        src={customThumbnailUrl}
+                        alt="サムネイルプレビュー"
+                        className="h-40 w-auto rounded-lg border object-cover"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* 基本情報 */}
         <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
