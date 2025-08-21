@@ -24,7 +24,9 @@
       "Bash(do taskkill //PID $pid //F)",
       "Bash(done)",
       "Bash(npx supabase storage ls:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx supabase:*)",
+      "Bash(mv:*)"
     ]
   },
   "disableAllHooks": true

@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import { useAuth } from '@/contexts/AuthContext'
 import { defaultBGMs } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
-import { generateModelThumbnail, generateCodeThumbnail, generateHtmlThumbnail } from '@/lib/thumbnailGenerator'
+import { generateModelThumbnail, generateHtmlThumbnail } from '@/lib/thumbnailGenerator'
 
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
 const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), { ssr: false })
@@ -49,7 +49,6 @@ export default function UploadPage() {
   const [thumbnailOption, setThumbnailOption] = useState<'auto' | 'custom'>('auto')
   const [customThumbnail, setCustomThumbnail] = useState<File | null>(null)
   const [customThumbnailUrl, setCustomThumbnailUrl] = useState<string | null>(null)
-  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
 
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,7 +219,6 @@ export default function UploadPage() {
       } else if (thumbnailOption === 'auto') {
         // 自動生成フラグを設定（実際の生成はアップロード後に行う）
         console.log('[Upload] サムネイル自動生成フラグを設定')
-        setIsGeneratingThumbnail(true)
       }
       
       const data = new FormData()
@@ -286,7 +284,6 @@ export default function UploadPage() {
         
         // サムネイル自動生成が必要な場合
         if (thumbnailOption === 'auto' && result.modelId) {
-          setIsGeneratingThumbnail(true)
           console.log('[Upload] サムネイル自動生成開始')
           
           try {
@@ -332,8 +329,6 @@ export default function UploadPage() {
           } catch (error) {
             console.error('[Upload] サムネイル自動生成エラー:', error)
             // サムネイル生成に失敗してもアップロード自体は成功とする
-          } finally {
-            setIsGeneratingThumbnail(false)
           }
         }
         
@@ -524,7 +519,7 @@ export default function UploadPage() {
         {/* サムネイル設定 */}
         <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
-            <Image className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Image className="h-4 w-4 sm:h-5 sm:w-5" aria-label="サムネイル設定" />
             サムネイル設定
           </h2>
           
@@ -552,7 +547,7 @@ export default function UploadPage() {
                   className="h-4 w-4"
                 />
                 <span className="flex items-center gap-1">
-                  <Image className="h-4 w-4" />
+                  <Image className="h-4 w-4" aria-label="カスタム画像" />
                   カスタム画像をアップロード
                 </span>
               </label>

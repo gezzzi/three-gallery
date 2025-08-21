@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Flag, Eye, Calendar, Tag, Bookmark } from 'lucide-react'
+import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark, Activity } from 'lucide-react'
 import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
@@ -16,7 +16,7 @@ import { getDefaultBGM } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
 // 3Dビューアを動的インポート（SSR無効化）
-const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), {
+const ModelViewerWithPerformance = dynamic(() => import('@/components/3d/ModelViewerWithPerformance'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-100">
@@ -33,6 +33,11 @@ const MusicPlayer = dynamic(() => import('@/components/ui/MusicPlayer'), {
   ssr: false,
 })
 
+// 共有モーダルを動的インポート
+const ShareModal = dynamic(() => import('@/components/ui/ShareModal').then(mod => ({ default: mod.ShareModal })), {
+  ssr: false,
+})
+
 export default function ViewPage() {
   const params = useParams()
   const [model, setModel] = useState<Model | null>(null)
@@ -40,6 +45,8 @@ export default function ViewPage() {
   const [activeTab, setActiveTab] = useState('description')
   const [musicUrl, setMusicUrl] = useState<string | undefined>()
   const [musicName, setMusicName] = useState<string>('無題の曲')
+  const [showPerformance, setShowPerformance] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const storedModels = useStore((state) => state.models)
   const addToHistory = useStore((state) => state.addToHistory)
@@ -231,17 +238,45 @@ export default function ViewPage() {
     window.open(model.fileUrl, '_blank')
   }
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href
+    const shareTitle = model.title
+    const shareText = model.description || `${model.title} - Three Gallery`
+
+    // Web Share APIをサポートしている場合（主にモバイル）
+    if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        })
+        return
+      } catch (err) {
+        // ユーザーがキャンセルした場合は何もしない
+        if ((err as Error).name === 'AbortError') {
+          return
+        }
+      }
+    }
+
+    // PCの場合はモーダルを表示
+    setShowShareModal(true)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 3Dビューア */}
       <div className="h-[60vh] bg-gray-900 relative">
-        <ModelViewer 
+        <ModelViewerWithPerformance
           modelUrl={model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
           htmlContent={model.metadata?.htmlContent as string | undefined}
           modelType={
             model.metadata?.type === 'threejs-html' ? 'html' : 
             'file'
           }
+          showPerformance={showPerformance}
+          onPerformanceToggle={setShowPerformance}
         />
         
         {/* 音楽プレイヤー */}
@@ -304,14 +339,24 @@ export default function ViewPage() {
                   <span>ブックマーク</span>
                 </button>
                 
-                <button className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200">
+                <button 
+                  onClick={handleShare}
+                  className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                >
                   <Share2 className="h-5 w-5" />
                   <span>共有</span>
                 </button>
                 
-                <button className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200">
-                  <Flag className="h-5 w-5" />
-                  <span>報告</span>
+                <button 
+                  onClick={() => setShowPerformance(!showPerformance)}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
+                    showPerformance
+                      ? 'bg-green-50 text-green-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <Activity className="h-5 w-5" />
+                  <span>パフォーマンス</span>
                 </button>
               </div>
             </div>
@@ -509,6 +554,17 @@ export default function ViewPage() {
           </div>
         )}
       </div>
+      
+      {/* Share Modal */}
+      {ShareModal && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          title={model.title}
+          url={window.location.href}
+          description={model.description}
+        />
+      )}
     </div>
   )
 }

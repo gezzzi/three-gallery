@@ -12,6 +12,7 @@ The project currently has Supabase configured with:
 - Authentication (Google OAuth enabled, password requirements: min 8 chars, lowercase + uppercase + numbers required)
 - Database schema deployed with RLS policies
 - Environment variables set in `.env.local`
+- Supabase CLI configured with local development environment
 - **Important**: RLS on `models` table is temporarily disabled due to auth issues in API routes
 
 ## Essential Commands
@@ -22,6 +23,17 @@ npm run dev          # Start development server on http://localhost:3000
 npm run build        # Build for production (must pass before deployment)
 npm run start        # Start production server
 npm run lint         # Run ESLint checks
+
+# Supabase Local Development
+npx supabase start   # Start local Supabase (PostgreSQL, Auth, Storage)
+npx supabase stop    # Stop local Supabase
+npx supabase status  # Check service URLs and keys
+npx supabase db reset # Reset local database with migrations
+
+# Database Management
+npx supabase migration new <name>  # Create new migration file
+npx supabase db push               # Apply migrations to production
+npx supabase gen types typescript --local > src/types/supabase.ts  # Generate TypeScript types
 
 # Testing builds locally
 npm run build && npm run start  # Test production build locally
@@ -118,16 +130,38 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 
 ## Database Schema (When Connected)
 
-Tables in `supabase/schema.sql`:
+Tables in `supabase/schema.sql` and migrations:
 - `profiles`: Extended user data with username, bio, avatar
 - `models`: 3D content metadata with tags, licensing, stats, BGM fields, `upload_type` field
 - `comments`, `likes`, `follows`, `bookmarks`: Social features
-- `tags`, `downloads`, `transactions`: Content management
+- `tags`, `downloads`: Content management
 - Row Level Security (RLS) policies configured but temporarily disabled on `models` table
 
-### Recent Updates
-- Fixed profile/settings pages loading state by removing race conditions
-- Enhanced upload API to support all three upload types (code, html, model)
-- RLS on models table temporarily disabled due to authentication issues in API routes
+### Recent Schema Updates
+- Created unified initial schema (`000_initial_schema.sql`) with all tables and RLS policies
+- Fixed migration numbering conflicts (002 → 003)
 - Added `upload_type` field handling in upload API
-- Fixed concurrent authentication state updates causing infinite loading
+- Enhanced BGM system with type indicators
+
+## Supabase Local Development
+
+### Local Services (when running)
+- **Database**: PostgreSQL on port 54322
+- **Auth**: Authentication service on port 54321
+- **Storage**: S3-compatible storage on port 54321
+- **Studio**: Database management UI on port 54323
+- **Inbucket**: Email testing on port 54324
+
+### Migration Workflow
+1. Make schema changes in SQL files
+2. Test locally with `npx supabase db reset`
+3. Generate types: `npx supabase gen types typescript --local > src/types/supabase.ts`
+4. Apply to production: `npx supabase db push`
+
+## Performance Considerations
+
+- **Dynamic Imports**: ModelViewer, CodeEditor loaded on-demand
+- **Image Optimization**: Disabled (`unoptimized: true` in next.config.js)
+- **Suspense Boundaries**: Wrap async components and useSearchParams
+- **Client-Side Routing**: App Router with proper loading states
+- **State Persistence**: Selective localStorage usage for performance

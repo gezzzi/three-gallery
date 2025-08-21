@@ -1,14 +1,17 @@
 'use client'
 
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage, Grid, useGLTF, Html, PerspectiveCamera } from '@react-three/drei'
 import { ErrorBoundary } from 'react-error-boundary'
 import * as THREE from 'three'
 import dynamic from 'next/dynamic'
 import { Maximize, Minimize } from 'lucide-react'
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
+import { PerformancePanel } from '@/components/ui/PerformancePanel'
 
 const CodeSandbox = dynamic(() => import('./CodeSandbox'), { ssr: false })
+const PerformanceMonitor = dynamic(() => import('./PerformanceMonitor').then(mod => ({ default: mod.PerformanceMonitor })), { ssr: false })
 const CodeEditor = dynamic(() => import('../ui/CodeEditor'), { ssr: false })
 const HtmlPreview = dynamic(() => import('./HtmlPreview'), { ssr: false })
 
@@ -22,9 +25,16 @@ interface ModelViewerProps {
   showCodeEditor?: boolean
   onLoad?: () => void
   onError?: (error: Error) => void
+  showPerformance?: boolean
+  onPerformanceReady?: (start: () => void, stop: () => void, stats: unknown) => void
+  onCanvasCreated?: (gl: THREE.WebGLRenderer, scene: THREE.Scene) => void
+  onPerformanceClose?: () => void
 }
 
-function Model({ url, onLoad }: { url: string; onLoad?: () => void }) {
+function Model({ url, onLoad }: { 
+  url: string; 
+  onLoad?: () => void;
+}) {
   const { scene, animations } = useGLTF(url)
   const mixer = useRef<THREE.AnimationMixer | null>(null)
   
@@ -83,7 +93,10 @@ export default function ModelViewer({
   showGrid = true,
   showCodeEditor = false,
   onLoad,
-  onError 
+  onError,
+  showPerformance = false,
+  onCanvasCreated,
+  onPerformanceClose
 }: ModelViewerProps) {
   const [error, setError] = useState<Error | null>(null)
   const [, setIsLoading] = useState(true)
@@ -91,11 +104,54 @@ export default function ModelViewer({
   const [showEditor, setShowEditor] = useState(showCodeEditor)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const loadStartTime = useRef<number>(0)
+  
+  const {
+    stats,
+    isMonitoring,
+    startMonitoring,
+    stopMonitoring,
+    setLoadMetrics
+  } = usePerformanceMonitor()
 
-  const handleLoad = () => {
+  const handleLoad = useCallback(async () => {
     setIsLoading(false)
+    
+    // Calculate load time
+    if (loadStartTime.current > 0) {
+      const loadTime = performance.now() - loadStartTime.current
+      
+      // Estimate file size if modelUrl is available
+      if (modelUrl) {
+        try {
+          const response = await fetch(modelUrl, { method: 'HEAD' })
+          const contentLength = response.headers.get('content-length')
+          const fileSizeMB = contentLength ? parseInt(contentLength) / (1024 * 1024) : 0
+          setLoadMetrics(loadTime, fileSizeMB)
+        } catch {
+          // If HEAD request fails, just set load time
+          setLoadMetrics(loadTime, 0)
+        }
+      } else {
+        setLoadMetrics(loadTime, 0)
+      }
+    }
+    
     onLoad?.()
-  }
+  }, [modelUrl, onLoad, setLoadMetrics])
+  
+  // Store renderer reference
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  
+  // Start/stop monitoring based on showPerformance prop
+  useEffect(() => {
+    if (showPerformance && rendererRef.current && sceneRef.current && !isMonitoring) {
+      startMonitoring(rendererRef.current, sceneRef.current)
+    } else if (!showPerformance && isMonitoring) {
+      stopMonitoring()
+    }
+  }, [showPerformance, isMonitoring, startMonitoring, stopMonitoring])
 
   const handleError = (err: Error) => {
     setError(err)
@@ -130,6 +186,15 @@ export default function ModelViewer({
     }
   }, [])
 
+  // ファイルタイプの場合（既存の実装）
+  if (!modelUrl && modelType === 'file') {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-gray-500">モデルURLが指定されていません</p>
+      </div>
+    )
+  }
+  
   // HTMLタイプの場合
   if (modelType === 'html' && htmlContent) {
     return (
@@ -199,18 +264,24 @@ export default function ModelViewer({
     )
   }
 
-  // ファイルタイプの場合（既存の実装）
-  if (!modelUrl) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-gray-500">モデルURLが指定されていません</p>
-      </div>
-    )
-  }
-
   return (
     <div ref={containerRef} className="relative h-full w-full">
-      <Canvas shadows>
+      <Canvas 
+        shadows
+        onCreated={({ gl, scene }) => {
+          rendererRef.current = gl as THREE.WebGLRenderer
+          sceneRef.current = scene
+          if (onCanvasCreated) {
+            onCanvasCreated(gl as THREE.WebGLRenderer, scene)
+          }
+          // Start monitoring if showPerformance is already true
+          if (showPerformance) {
+            setTimeout(() => {
+              startMonitoring(gl as THREE.WebGLRenderer, scene)
+            }, 100)
+          }
+        }}
+      >
         <PerspectiveCamera makeDefault position={[0, 2, 5]} />
         <ErrorBoundary
           fallbackRender={({ error: err }) => <ErrorFallback error={err} />}
@@ -221,13 +292,22 @@ export default function ModelViewer({
               <ErrorFallback error={error} />
             ) : (
               <>
+                {/* Performance monitoring component */}
+                {showPerformance && isMonitoring && PerformanceMonitor && (
+                  <PerformanceMonitor onUpdate={() => {
+                    // Force update stats
+                    if (rendererRef.current && sceneRef.current) {
+                      // Stats will be updated by the hook's animation loop
+                    }
+                  }} />
+                )}
                 <Stage
                   intensity={0.5}
                   preset="rembrandt"
                   environment="city"
                 >
                   <Model 
-                    url={modelUrl} 
+                    url={modelUrl!} 
                     onLoad={handleLoad}
                   />
                 </Stage>
@@ -271,6 +351,22 @@ export default function ModelViewer({
           )}
         </button>
       </div>
+      
+      {/* Performance Panel - Inside ModelViewer for fullscreen compatibility */}
+      {showPerformance && (
+        <PerformancePanel
+          stats={stats}
+          isVisible={showPerformance}
+          onClose={() => {
+            if (isMonitoring) {
+              stopMonitoring()
+            }
+            if (onPerformanceClose) {
+              onPerformanceClose()
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
