@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import { useAuth } from '@/contexts/AuthContext'
 import { defaultBGMs } from '@/lib/defaultBgm'
 import { createClient } from '@/lib/supabase-client'
-import { generateSimpleHtmlThumbnail } from '@/lib/simpleThumbnailGenerator'
+import { captureHtmlThumbnail, createPlaceholderThumbnail } from '@/lib/thumbnailCapture'
 
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
@@ -196,8 +196,69 @@ export default function UploadPage() {
           console.error('[Upload] カスタムサムネイルアップロード失敗')
         }
       } else if (thumbnailOption === 'auto') {
-        // 自動生成フラグを設定（実際の生成はアップロード後に行う）
-        console.log('[Upload] サムネイル自動生成フラグを設定')
+        // HTMLコンテンツからサムネイルを自動生成
+        console.log('[Upload] サムネイル自動生成開始')
+        
+        try {
+          // デバッグ: HTMLコンテンツの最初の部分を表示
+          console.log('[Upload] HTMLコンテンツの先頭500文字:')
+          console.log(htmlContent.substring(0, 500))
+          console.log('[Upload] Canvas要素の有無をチェック:')
+          console.log('Canvas要素が含まれている:', htmlContent.includes('<canvas'))
+          console.log('THREE.jsが含まれている:', htmlContent.includes('THREE'))
+          
+          // HTMLコンテンツからサムネイルをキャプチャ
+          let thumbnailBlob = await captureHtmlThumbnail(htmlContent, {
+            captureDelay: 3000,  // 3秒待機してからキャプチャ（デバッグ版で成功した値）
+            maxWaitTime: 15000   // 最大15秒待機
+          })
+          
+          // キャプチャに失敗した場合はプレースホルダーを生成
+          if (!thumbnailBlob) {
+            console.log('[Upload] キャプチャ失敗、プレースホルダーを生成')
+            thumbnailBlob = await createPlaceholderThumbnail(formData.title || 'Three.js作品')
+          }
+          
+          // サムネイルをアップロード
+          console.log('[Upload] 生成したサムネイルをアップロード')
+          const thumbnailFormData = new FormData()
+          thumbnailFormData.append('file', thumbnailBlob, 'thumbnail.jpg')
+          thumbnailFormData.append('type', 'auto-generated')
+          
+          const supabase = createClient()
+          const { data: { session } } = await supabase.auth.getSession()
+          const headers: HeadersInit = {}
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`
+          }
+          
+          try {
+            const thumbnailResponse = await fetch('/api/upload/thumbnail', {
+              method: 'POST',
+              body: thumbnailFormData,
+              headers,
+              credentials: 'include'
+            })
+            
+            if (thumbnailResponse.ok) {
+              const thumbnailData = await thumbnailResponse.json()
+              thumbnailUrl = thumbnailData.url
+              console.log('[Upload] 自動生成サムネイルアップロード成功:', thumbnailUrl)
+            } else {
+              const errorData = await thumbnailResponse.text()
+              console.error('[Upload] 自動生成サムネイルアップロード失敗:', thumbnailResponse.status, errorData)
+              // デフォルトのプレースホルダー画像URLを使用
+              thumbnailUrl = '/placeholder-html.svg'
+            }
+          } catch (uploadError) {
+            console.error('[Upload] サムネイルアップロードエラー:', uploadError)
+            // デフォルトのプレースホルダー画像URLを使用
+            thumbnailUrl = '/placeholder-html.svg'
+          }
+        } catch (error) {
+          console.error('[Upload] サムネイル自動生成エラー:', error)
+          // エラーが発生してもアップロード処理は継続
+        }
       }
       
       const data = new FormData()
@@ -258,55 +319,6 @@ export default function UploadPage() {
       
       if (result.success) {
         console.log('Upload successful:', result)
-        
-        // サムネイル自動生成が必要な場合
-        if (thumbnailOption === 'auto' && result.modelId) {
-          console.log('[Upload] サムネイル自動生成開始')
-          
-          // 非同期でサムネイルを生成（メインのアップロード処理をブロックしない）
-          setTimeout(async () => {
-            try {
-              // HTMLコンテンツのサムネイルを生成
-              const thumbnailBlob = await generateSimpleHtmlThumbnail(htmlContent)
-              
-              if (thumbnailBlob) {
-                // 生成したサムネイルをアップロード
-                const thumbnailFormData = new FormData()
-                thumbnailFormData.append('file', thumbnailBlob, 'thumbnail.jpg')
-                thumbnailFormData.append('type', 'auto-generated')
-                
-                const thumbnailResponse = await fetch('/api/upload/thumbnail', {
-                  method: 'POST',
-                  body: thumbnailFormData,
-                  headers,
-                  credentials: 'include'
-                })
-                
-                if (thumbnailResponse.ok) {
-                  const thumbnailData = await thumbnailResponse.json()
-                  
-                  // モデルのthumbnail_urlを更新
-                  await fetch(`/api/models/${result.modelId}`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      ...headers
-                    },
-                    body: JSON.stringify({
-                      thumbnail_url: thumbnailData.url
-                    }),
-                    credentials: 'include'
-                  })
-                  
-                  console.log('[Upload] サムネイル自動生成・更新完了')
-                }
-              }
-            } catch (error) {
-              console.error('[Upload] サムネイル自動生成エラー:', error)
-              // サムネイル生成に失敗してもユーザーには影響しない
-            }
-          }, 100) // 少し遅延させて実行
-        }
         
         // ホームページにリダイレクト
         router.push('/')

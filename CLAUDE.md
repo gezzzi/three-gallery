@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Three Gallery is a 3D content sharing platform supporting three upload types: Three.js code snippets, HTML files with Three.js, and 3D model files (GLB/GLTF). The platform features user authentication, profiles, BGM support, and operates in two modes: full-featured with Supabase or local demo mode without backend dependencies.
+Three Gallery is an HTML Three.js content sharing platform for interactive 3D web experiences. Users can upload HTML files containing Three.js code or write Three.js code snippets directly. The platform features user authentication, profiles, BGM support, and operates in two modes: full-featured with Supabase or local demo mode without backend dependencies.
+
+**Important: This application only supports HTML/JavaScript Three.js content. 3D model file uploads (GLB/GLTF) have been removed.**
 
 ## Current Configuration Status
 
@@ -41,10 +43,9 @@ npm run build && npm run start  # Test production build locally
 
 ## Architecture & Key Patterns
 
-### Upload System (Three Types)
+### Upload System (Two Types Only)
 1. **Three.js Code** (`uploadType: 'code'`): Uses CodeEditor and CodeSandbox components with sandboxed execution
-2. **HTML Files** (`uploadType: 'html'`): Full HTML documents rendered in iframe with HtmlPreview component
-3. **3D Models** (`uploadType: 'model'`): GLB/GLTF files rendered with ModelViewer using React Three Fiber
+2. **HTML Files** (`uploadType: 'html'`): Full HTML documents with Three.js rendered in iframe with HtmlPreview component
 
 ### Authentication Flow
 - **AuthContext** (`src/contexts/AuthContext.tsx`): Wraps entire app at layout level, manages auth state
@@ -65,15 +66,15 @@ npm run build && npm run start  # Test production build locally
 
 ### Component Architecture
 - **Layout Structure**: AuthProvider > LayoutClient > Header + Sidebar + Content
-- **Dynamic Imports**: Heavy components (ModelViewer, CodeEditor) loaded with `dynamic()` for performance
+- **Dynamic Imports**: Heavy components (CodeEditor, HtmlPreview) loaded with `dynamic()` for performance
 - **Client Components**: All interactive components use `'use client'` directive
 - **Suspense Boundaries**: Required for useSearchParams and async components
 
-### 3D Rendering Pipeline
-- **ModelViewer** (`src/components/3d/ModelViewer.tsx`): Central component switching between three render modes
-- **CodeSandbox**: Sandboxed Three.js execution with message passing between iframe and parent
-- **HtmlPreview**: Direct HTML rendering with srcdoc for embedded Three.js scenes
+### HTML/Code Rendering Pipeline
+- **HtmlPreview** (`src/components/3d/HtmlPreview.tsx`): Direct HTML rendering with srcdoc for embedded Three.js scenes
+- **CodeSandbox** (`src/components/3d/CodeSandbox.tsx`): Sandboxed Three.js execution with message passing between iframe and parent
 - **Security**: Sandboxed iframes block dangerous APIs (fetch, localStorage, etc.)
+- **No 3D Model Support**: ModelViewer and related components have been removed
 
 ### BGM System
 - **Default BGMs** (`src/lib/defaultBgm.ts`): Predefined BGM tracks with genres and descriptions
@@ -117,12 +118,13 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 ### File Upload Handling
 - **Code**: Stored as string in metadata.code, requires `file_url: 'threejs-code'`
 - **HTML**: Read as text via FileReader, stored in metadata.htmlContent, requires `file_url: 'threejs-html'`
-- **3D Models**: Create blob URL for preview using URL.createObjectURL(), requires `file_url` with model path
-- **BGM Files**: Stored as metadata with type indicator (default/upload)
-- **API Route** (`/api/upload/route.ts`): Handles all three types, requires proper authentication setup
+- **BGM Files**: Stored in Supabase storage bucket 'music', URL saved in bgm_url field
+- **Thumbnails**: Auto-generated or custom upload, stored as URL reference
+- **API Route** (`/api/upload/route.ts`): Handles HTML and code uploads with authentication
 
 ### Type Patterns
-- Models use `Model` interface from `src/types/index.ts`
+- Models use `Model` interface from `src/types/index.ts` with `uploadType: 'html' | 'code'`
+- Removed properties: `hasAnimation`, `polygonCount`, `animationDuration`
 - Avoid `any` - use `Record<string, unknown>` for metadata type assertions
 - Error handling: Always check `error instanceof Error`
 - Optional chaining for user metadata: `user?.user_metadata?.avatar_url`
@@ -132,7 +134,7 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 
 Tables in `supabase/schema.sql` and migrations:
 - `profiles`: Extended user data with username, bio, avatar
-- `models`: 3D content metadata with tags, licensing, stats, BGM fields, `upload_type` field
+- `models`: Content metadata with tags, licensing, stats, BGM fields, `upload_type` field ('html' or 'code' only)
 - `comments`, `likes`, `follows`, `bookmarks`: Social features
 - `tags`, `downloads`: Content management
 - Row Level Security (RLS) policies configured but temporarily disabled on `models` table
@@ -140,8 +142,8 @@ Tables in `supabase/schema.sql` and migrations:
 ### Recent Schema Updates
 - Created unified initial schema (`000_initial_schema.sql`) with all tables and RLS policies
 - Fixed migration numbering conflicts (002 → 003)
-- Added `upload_type` field handling in upload API
-- Enhanced BGM system with type indicators
+- Added `upload_type` field handling in upload API (supports 'html' and 'code' only)
+- Enhanced BGM system with direct column storage (bgm_type, bgm_url, bgm_name)
 
 ## Supabase Local Development
 
@@ -160,8 +162,16 @@ Tables in `supabase/schema.sql` and migrations:
 
 ## Performance Considerations
 
-- **Dynamic Imports**: ModelViewer, CodeEditor loaded on-demand
+- **Dynamic Imports**: HtmlPreview, CodeEditor loaded on-demand
 - **Image Optimization**: Disabled (`unoptimized: true` in next.config.js)
 - **Suspense Boundaries**: Wrap async components and useSearchParams
 - **Client-Side Routing**: App Router with proper loading states
 - **State Persistence**: Selective localStorage usage for performance
+
+## Recent Major Changes
+
+- **Removed 3D Model Support**: Application now only supports HTML Three.js content
+- **Simplified Upload Flow**: Only HTML file upload or code editor options remain
+- **Updated UI Text**: Changed from "3Dモデル" to "Three.js作品" throughout
+- **Removed Components**: ModelViewer, ModelViewerWithPerformance deleted
+- **Type Updates**: Removed model-specific properties from Model interface
