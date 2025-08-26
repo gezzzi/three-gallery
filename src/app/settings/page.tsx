@@ -314,7 +314,7 @@ export default function SettingsPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto" />
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
         </div>
       </div>
     )
@@ -335,7 +335,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">設定</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">設定</h1>
 
       <div className="flex gap-6">
         {/* サイドバー */}
@@ -349,8 +349,8 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id as SettingsTab)}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-blue-900/20 text-blue-400 dark:bg-blue-900/20 dark:text-blue-400'
+                      : 'hover:bg-gray-700 text-gray-300 dark:hover:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -366,7 +366,7 @@ export default function SettingsPage() {
           <div className="mt-8 border-t pt-4">
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-600 hover:bg-red-50"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               <LogOut className="h-5 w-5" />
               <span className="font-medium">ログアウト</span>
@@ -378,7 +378,7 @@ export default function SettingsPage() {
         <div className="flex-1">
           {message && (
             <div className={`mb-4 rounded-lg p-4 ${
-              message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              message.type === 'success' ? 'bg-green-900/20 text-green-400 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-900/20 text-red-400 dark:bg-red-900/20 dark:text-red-400'
             }`}>
               <div className="flex items-center gap-2">
                 {message.type === 'success' ? (
@@ -393,60 +393,60 @@ export default function SettingsPage() {
 
           {/* アカウント設定 */}
           {activeTab === 'account' && (
-            <div className="rounded-lg bg-white p-6">
-              <h2 className="mb-6 text-xl font-semibold">アカウント設定</h2>
+            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">アカウント設定</h2>
               
               <div className="space-y-6">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">メールアドレス</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">メールアドレス</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">ユーザー名</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ユーザー名</label>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="username"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">表示名</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">表示名</label>
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="表示名"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">自己紹介</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">自己紹介</label>
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={4}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="自己紹介を入力..."
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">ウェブサイト</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ウェブサイト</label>
                   <input
                     type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="https://example.com"
                   />
                 </div>
@@ -456,7 +456,7 @@ export default function SettingsPage() {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-sm font-medium">現在のパスワード</label>
+                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">現在のパスワード</label>
                       <div className="relative">
                         <input
                           type={showCurrentPassword ? 'text' : 'password'}
@@ -479,7 +479,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-medium">新しいパスワード</label>
+                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">新しいパスワード</label>
                       <div className="relative">
                         <input
                           type={showNewPassword ? 'text' : 'password'}
@@ -502,7 +502,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-medium">パスワード確認</label>
+                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">パスワード確認</label>
                       <div className="relative">
                         <input
                           type={showConfirmPassword ? 'text' : 'password'}
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveAccount}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -556,8 +556,8 @@ export default function SettingsPage() {
 
           {/* 通知設定 */}
           {activeTab === 'notifications' && (
-            <div className="rounded-lg bg-white p-6">
-              <h2 className="mb-6 text-xl font-semibold">通知設定</h2>
+            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">通知設定</h2>
               
               <div className="space-y-6">
                 <div>
@@ -648,7 +648,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveNotifications}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -664,16 +664,16 @@ export default function SettingsPage() {
 
           {/* 表示設定 */}
           {activeTab === 'display' && (
-            <div className="rounded-lg bg-white p-6">
-              <h2 className="mb-6 text-xl font-semibold">表示設定</h2>
+            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">表示設定</h2>
               
               <div className="space-y-6">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">テーマ</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">テーマ</label>
                   <select
                     value={display.theme}
                     onChange={(e) => setDisplay({ ...display, theme: e.target.value as 'light' | 'dark' | 'system' })}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   >
                     <option value="light">ライト</option>
                     <option value="dark">ダーク</option>
@@ -682,11 +682,11 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">言語</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">言語</label>
                   <select
                     value={display.language}
                     onChange={(e) => setDisplay({ ...display, language: e.target.value as 'ja' | 'en' })}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   >
                     <option value="ja">日本語</option>
                     <option value="en">English</option>
@@ -738,7 +738,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveDisplay}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -754,16 +754,16 @@ export default function SettingsPage() {
 
           {/* プライバシー設定 */}
           {activeTab === 'privacy' && (
-            <div className="rounded-lg bg-white p-6">
-              <h2 className="mb-6 text-xl font-semibold">プライバシー設定</h2>
+            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">プライバシー設定</h2>
               
               <div className="space-y-6">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">プロフィールの公開範囲</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">プロフィールの公開範囲</label>
                   <select
                     value={privacy.profileVisibility}
                     onChange={(e) => setPrivacy({ ...privacy, profileVisibility: e.target.value as 'public' | 'followers' | 'private' })}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   >
                     <option value="public">全体に公開</option>
                     <option value="followers">フォロワーのみ</option>
@@ -772,11 +772,11 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">メッセージの受信</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">メッセージの受信</label>
                   <select
                     value={privacy.allowMessages}
                     onChange={(e) => setPrivacy({ ...privacy, allowMessages: e.target.value as 'everyone' | 'followers' | 'none' })}
-                    className="w-full rounded-lg border px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   >
                     <option value="everyone">全員から受信</option>
                     <option value="followers">フォロワーのみ</option>
@@ -830,7 +830,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSavePrivacy}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -846,8 +846,8 @@ export default function SettingsPage() {
 
           {/* セキュリティ設定 */}
           {activeTab === 'security' && (
-            <div className="rounded-lg bg-white p-6">
-              <h2 className="mb-6 text-xl font-semibold">セキュリティ設定</h2>
+            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">セキュリティ設定</h2>
               
               <div className="space-y-6">
                 <div className="rounded-lg border p-4">

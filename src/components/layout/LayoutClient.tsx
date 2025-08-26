@@ -38,7 +38,7 @@ export default function LayoutClient({ children }: LayoutClientProps) {
       <div className="flex relative">
         <Sidebar />
         <main className={cn(
-          "flex-1 min-h-[calc(100vh-64px)] bg-gray-50 transition-all duration-300",
+          "flex-1 min-h-[calc(100vh-64px)] bg-gray-900 transition-all duration-300",
           // デスクトップではサイドバーの開閉に応じてマージンを調整
           !isMobile && sidebarState ? "lg:ml-64" : "ml-0",
           // モバイルでは常にフルwidth

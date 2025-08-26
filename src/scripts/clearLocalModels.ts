@@ -10,7 +10,7 @@ const clearLocalModels = () => {
     try {
       const parsedData = JSON.parse(storedData)
       
-      // modelsを空配列にリセット（デモ作品はmockDataから読み込まれるため削除されない）
+      // modelsを空配列にリセット
       if (parsedData.state && parsedData.state.models) {
         parsedData.state.models = []
         

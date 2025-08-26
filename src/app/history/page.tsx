@@ -6,7 +6,6 @@ import { Clock, Trash2, Calendar, TrendingUp } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
 import { useStore } from '@/store/useStore'
-import { mockModels } from '@/lib/mockData'
 import { formatDate } from '@/lib/utils'
 
 export default function HistoryPage() {
@@ -23,8 +22,8 @@ export default function HistoryPage() {
   const fetchHistoryModels = async () => {
     setLoading(true)
     try {
-      // ローカルストアとモックデータから、履歴のモデルを取得
-      const allModels = [...storedModels, ...mockModels]
+      // ローカルストアから、履歴のモデルを取得
+      const allModels = [...storedModels]
       const uniqueModels = Array.from(
         new Map(allModels.map(model => [model.id, model])).values()
       )

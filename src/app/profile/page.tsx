@@ -373,7 +373,7 @@ export default function ProfilePage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto" />
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
         </div>
       </div>
     )
@@ -384,14 +384,14 @@ export default function ProfilePage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center max-w-md">
-          <LogIn className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">ログインが必要です</h2>
-          <p className="text-gray-600 mb-6">
+          <LogIn className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">ログインが必要です</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             プロフィールを表示するにはログインが必要です
           </p>
           <button
             onClick={() => setShowAuthModal(true)}
-            className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-500 px-6 py-3 font-medium text-white hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             ログイン / 新規登録
           </button>
@@ -410,7 +410,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-6xl p-3 sm:p-6">
       {/* プロフィールヘッダー */}
-      <div className="mb-4 sm:mb-8 rounded-lg bg-white p-4 sm:p-6">
+      <div className="mb-4 sm:mb-8 rounded-lg bg-gray-800 p-4 sm:p-6 dark:bg-gray-800">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           {/* アバター */}
           <div className="relative">
@@ -439,64 +439,64 @@ export default function ProfilePage() {
             {isEditing ? (
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">ユーザー名</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">ユーザー名</label>
                   <input
                     type="text"
                     value={editForm.username}
                     onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="username"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">表示名</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">表示名</label>
                   <input
                     type="text"
                     value={editForm.display_name}
                     onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="表示名"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">自己紹介</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">自己紹介</label>
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     rows={3}
                     placeholder="自己紹介を入力..."
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">ウェブサイト</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">ウェブサイト</label>
                   <input
                     type="url"
                     value={editForm.website}
                     onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                    className="w-full rounded-lg border px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     placeholder="https://example.com"
                   />
                 </div>
               </div>
             ) : (
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold">{profile?.display_name || 'ユーザー'}</h1>
-                <p className="text-sm sm:text-base text-gray-600">@{profile?.username || 'username'}</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-200">{profile?.display_name || 'ユーザー'}</h1>
+                <p className="text-sm sm:text-base text-gray-400 dark:text-gray-400">@{profile?.username || 'username'}</p>
                 {profile?.bio && (
-                  <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-700">{profile.bio}</p>
+                  <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-300 dark:text-gray-300">{profile.bio}</p>
                 )}
                 {profile?.website && (
                   <a
                     href={profile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-block text-sm sm:text-base text-blue-600 hover:underline"
+                    className="mt-2 inline-block text-sm sm:text-base text-blue-400 hover:underline dark:text-blue-400"
                   >
                     {profile.website}
                   </a>
                 )}
-                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                   <div className="flex items-center gap-1">
                     <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="truncate max-w-[200px] sm:max-w-none">{user.email}</span>
@@ -517,7 +517,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-1 sm:gap-2 rounded-lg bg-blue-600 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+                  className="flex items-center gap-1 sm:gap-2 rounded-lg bg-blue-500 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
                 >
                   {saving ? (
                     <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
@@ -528,7 +528,7 @@ export default function ProfilePage() {
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-1 sm:gap-2 rounded-lg border px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-50"
+                  className="flex items-center gap-1 sm:gap-2 rounded-lg border border-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   キャンセル
@@ -537,7 +537,7 @@ export default function ProfilePage() {
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1 sm:gap-2 rounded-lg border px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-50"
+                className="flex items-center gap-1 sm:gap-2 rounded-lg border border-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 編集
@@ -550,16 +550,16 @@ export default function ProfilePage() {
       {/* タブ */}
       <div className="mb-4 sm:mb-6 border-b overflow-x-auto">
         <nav className="flex gap-4 sm:gap-6 min-w-max">
-          <button className="border-b-2 border-blue-600 pb-2 sm:pb-3 text-sm sm:text-base font-medium text-blue-600 whitespace-nowrap">
+          <button className="border-b-2 border-blue-500 pb-2 sm:pb-3 text-sm sm:text-base font-medium text-blue-400 whitespace-nowrap dark:border-blue-400 dark:text-blue-400">
             アップロード ({userModels.length})
           </button>
-          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
             いいね
           </button>
-          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
             フォロー中
           </button>
-          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-600 hover:text-gray-900 whitespace-nowrap">
+          <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
             フォロワー
           </button>
         </nav>
@@ -575,7 +575,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => handleDeleteModel(model.id)}
                   disabled={deletingId === model.id}
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 disabled:bg-gray-400"
+                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 disabled:bg-gray-600 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-gray-600"
                   title="削除"
                 >
                   {deletingId === model.id ? (
@@ -589,10 +589,10 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">まだアップロードしたモデルがありません</p>
+            <p className="text-gray-400 dark:text-gray-500">まだアップロードしたモデルがありません</p>
             <button
               onClick={() => router.push('/upload')}
-              className="mt-4 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700"
+              className="mt-4 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               最初のモデルをアップロード
             </button>

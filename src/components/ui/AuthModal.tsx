@@ -63,20 +63,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-lg bg-white p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md rounded-lg bg-gray-800 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-lg p-1 hover:bg-gray-100"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-lg p-1 hover:bg-gray-700 text-gray-300"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold">
+        <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-gray-100">
           {mode === 'signin' ? 'ログイン' : '新規登録'}
         </h2>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-4 rounded-lg bg-red-900/20 p-3 text-sm text-red-400">
             {error}
           </div>
         )}
@@ -84,16 +84,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'signup' && (
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-gray-200">
                 ユーザー名
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-lg border py-2 pl-10 pr-3 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
                   placeholder="username"
                   required={mode === 'signup'}
                 />
@@ -102,16 +102,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-gray-200">
               メールアドレス
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border py-2 pl-10 pr-3 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
                 placeholder="email@example.com"
                 required
               />
@@ -119,16 +119,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-gray-200">
               パスワード
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border py-2 pl-10 pr-3 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -139,21 +139,21 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
+            className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600"
           >
             {loading ? '処理中...' : (mode === 'signin' ? 'ログイン' : '登録')}
           </button>
         </form>
 
         <div className="my-6 flex items-center">
-          <div className="flex-1 border-t" />
-          <span className="px-4 text-sm text-gray-500">または</span>
-          <div className="flex-1 border-t" />
+          <div className="flex-1 border-t border-gray-600" />
+          <span className="px-4 text-sm text-gray-400">または</span>
+          <div className="flex-1 border-t border-gray-600" />
         </div>
 
         <button
           onClick={handleGoogleSignIn}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border py-3 font-medium hover:bg-gray-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-600 bg-gray-700 py-3 font-medium text-gray-200 hover:bg-gray-600"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -176,13 +176,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           Googleでログイン
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-gray-400">
           {mode === 'signin' ? (
             <>
               アカウントをお持ちでない方は
               <button
                 onClick={() => setMode('signup')}
-                className="ml-1 text-blue-600 hover:underline"
+                className="ml-1 text-blue-400 hover:underline"
               >
                 新規登録
               </button>
@@ -192,7 +192,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
               すでにアカウントをお持ちの方は
               <button
                 onClick={() => setMode('signin')}
-                className="ml-1 text-blue-600 hover:underline"
+                className="ml-1 text-blue-400 hover:underline"
               >
                 ログイン
               </button>

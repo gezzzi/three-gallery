@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark, Activity } from 'lucide-react'
-import { mockModels } from '@/lib/mockData'
+import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
@@ -15,14 +14,14 @@ import { useLike } from '@/hooks/useLike'
 import { getDefaultBGM } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
-// 3Dビューアを動的インポート（SSR無効化）
-const ModelViewerWithPerformance = dynamic(() => import('@/components/3d/ModelViewerWithPerformance'), {
+// HTMLビューアを動的インポート（SSR無効化）
+const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-100">
+    <div className="flex h-full items-center justify-center bg-gray-800">
       <div className="text-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto" />
-        <p className="mt-4 text-gray-600">3Dビューアを読み込み中...</p>
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-600 border-t-blue-600 mx-auto" />
+        <p className="mt-4 text-gray-400">ビューアを読み込み中...</p>
       </div>
     </div>
   ),
@@ -45,7 +44,6 @@ export default function ViewPage() {
   const [activeTab, setActiveTab] = useState('description')
   const [musicUrl, setMusicUrl] = useState<string | undefined>()
   const [musicName, setMusicName] = useState<string>('無題の曲')
-  const [showPerformance, setShowPerformance] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const storedModels = useStore((state) => state.models)
@@ -86,9 +84,6 @@ export default function ViewPage() {
           licenseType: supabaseModel.license_type || 'CC BY',
           isCommercialOk: supabaseModel.is_commercial_ok || false,
           fileSize: supabaseModel.file_size || 0,
-          hasAnimation: supabaseModel.has_animation || false,
-          polygonCount: supabaseModel.polygon_count,
-          animationDuration: supabaseModel.animation_duration,
           // BGMデータ
           musicType: supabaseModel.bgm_type || (supabaseModel.metadata?.music_type as string) || undefined,
           musicUrl: supabaseModel.bgm_url || (supabaseModel.metadata?.music_url as string) || undefined,
@@ -96,7 +91,7 @@ export default function ViewPage() {
         }
       } else {
         // Supabaseから取得できない場合はローカルデータを使用
-        const allModels = [...storedModels, ...mockModels]
+        const allModels = [...storedModels]
         foundModel = allModels.find(m => m.id === params.id) || null
       }
       
@@ -130,10 +125,7 @@ export default function ViewPage() {
             status: model.status || 'public',
             licenseType: model.license_type || 'CC BY',
             isCommercialOk: model.is_commercial_ok || false,
-            fileSize: model.file_size || 0,
-            hasAnimation: model.has_animation || false,
-            polygonCount: model.polygon_count,
-            animationDuration: model.animation_duration
+            fileSize: model.file_size || 0
           })) as Model[]
           setRelatedModels(formattedRelated)
         }
@@ -266,17 +258,11 @@ export default function ViewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 3Dビューア */}
+      {/* HTMLビューア */}
       <div className="h-[60vh] bg-gray-900 relative">
-        <ModelViewerWithPerformance
-          modelUrl={model.fileUrl === 'threejs-html' ? undefined : model.fileUrl}
-          htmlContent={model.metadata?.htmlContent as string | undefined}
-          modelType={
-            model.metadata?.type === 'threejs-html' ? 'html' : 
-            'file'
-          }
-          showPerformance={showPerformance}
-          onPerformanceToggle={setShowPerformance}
+        <HtmlPreview
+          htmlContent={(model.metadata?.htmlContent as string) || ''}
+          height="100%"
         />
         
         {/* 音楽プレイヤー */}
@@ -346,18 +332,6 @@ export default function ViewPage() {
                   <Share2 className="h-5 w-5" />
                   <span>共有</span>
                 </button>
-                
-                <button 
-                  onClick={() => setShowPerformance(!showPerformance)}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                    showPerformance
-                      ? 'bg-green-50 text-green-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <Activity className="h-5 w-5" />
-                  <span>パフォーマンス</span>
-                </button>
               </div>
             </div>
 
@@ -424,26 +398,14 @@ export default function ViewPage() {
               {activeTab === 'specs' && (
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">ポリゴン数</span>
-                    <span className="font-medium">
-                      {model.polygonCount ? formatNumber(model.polygonCount) : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
                     <span className="text-gray-600">ファイルサイズ</span>
                     <span className="font-medium">
                       {model.fileSize ? formatFileSize(model.fileSize) : 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">アニメーション</span>
-                    <span className="font-medium">
-                      {model.hasAnimation ? `あり (${model.animationDuration}秒)` : 'なし'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
                     <span className="text-gray-600">フォーマット</span>
-                    <span className="font-medium">GLB/GLTF</span>
+                    <span className="font-medium">HTML/JavaScript</span>
                   </div>
                 </div>
               )}

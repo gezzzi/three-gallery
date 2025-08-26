@@ -71,12 +71,12 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center gap-2 sm:gap-4 border-b bg-white px-2 sm:px-4 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-16 items-center gap-2 sm:gap-4 border border-gray-700 bg-gray-800 px-2 sm:px-4 shadow-sm">
       {/* ロゴとメニュー */}
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           onClick={toggleSidebar}
-          className="rounded-lg p-1.5 sm:p-2 hover:bg-gray-100"
+          className="rounded-lg p-1.5 sm:p-2 hover:bg-gray-700"
           aria-label="メニュー"
         >
           <Menu className="h-5 w-5" />
@@ -90,17 +90,17 @@ export default function Header() {
       {/* デスクトップ検索バー */}
       <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
         <div className={`relative flex items-center rounded-full border ${
-          isSearchFocused ? 'border-blue-500' : 'border-gray-300'
-        } bg-gray-50 px-4 py-2 transition-colors w-full`}>
-          <Search className="h-5 w-5 text-gray-400" />
+          isSearchFocused ? 'border-blue-400' : 'border-gray-600'
+        } bg-gray-900 px-4 py-2 transition-colors w-full`}>
+          <Search className="h-5 w-5 text-gray-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
-            placeholder="3Dモデルを検索..."
-            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-400"
+            placeholder="作品を検索..."
+            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-500 text-gray-100"
           />
         </div>
       </form>
@@ -108,7 +108,7 @@ export default function Header() {
       {/* モバイル検索ボタン */}
       <button
         onClick={() => setShowMobileSearch(!showMobileSearch)}
-        className="md:hidden rounded-lg p-2 hover:bg-gray-100"
+        className="md:hidden rounded-lg p-2 hover:bg-gray-700"
         aria-label="検索"
       >
         <Search className="h-5 w-5" />
@@ -128,7 +128,7 @@ export default function Header() {
           <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative rounded-lg p-1.5 sm:p-2 hover:bg-gray-100"
+              className="relative rounded-lg p-1.5 sm:p-2 hover:bg-gray-700"
               aria-label="通知"
             >
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -152,7 +152,7 @@ export default function Header() {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="h-8 w-8 rounded-full bg-gray-300 hover:ring-2 hover:ring-blue-500 transition-all"
+                className="h-8 w-8 rounded-full bg-gray-600 hover:ring-2 hover:ring-blue-400 transition-all"
               >
                 {user.user_metadata?.avatar_url ? (
                   <img
@@ -169,10 +169,10 @@ export default function Header() {
               
               {/* ユーザーメニュードロップダウン */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white py-2 shadow-lg border z-50">
+                <div className="absolute right-0 mt-2 w-48 rounded-lg bg-gray-800 py-2 shadow-lg border border-gray-700 z-50">
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-gray-300"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <User className="h-4 w-4" />
@@ -180,7 +180,7 @@ export default function Header() {
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-gray-300"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <Settings className="h-4 w-4" />
@@ -192,7 +192,7 @@ export default function Header() {
                       signOut()
                       setShowUserMenu(false)
                     }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-red-400"
                   >
                     <LogOut className="h-4 w-4" />
                     ログアウト
@@ -203,7 +203,7 @@ export default function Header() {
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}
-              className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 transition-colors text-gray-200"
             >
               ログイン
             </button>
@@ -213,19 +213,19 @@ export default function Header() {
       
       {/* モバイル検索バー */}
       {showMobileSearch && (
-        <div className="absolute top-16 left-0 right-0 bg-white border-b p-2 md:hidden z-40">
+        <div className="absolute top-16 left-0 right-0 bg-gray-800 border-b border-gray-700 p-2 md:hidden z-40">
           <form onSubmit={(e) => {
             handleSearch(e)
             setShowMobileSearch(false)
           }}>
-            <div className="relative flex items-center rounded-full border border-gray-300 bg-gray-50 px-4 py-2">
-              <Search className="h-5 w-5 text-gray-400" />
+            <div className="relative flex items-center rounded-full border border-gray-600 bg-gray-900 px-4 py-2">
+              <Search className="h-5 w-5 text-gray-500" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="3Dモデルを検索..."
-                className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-400"
+                placeholder="作品を検索..."
+                className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-500 text-gray-100"
                 autoFocus
               />
             </div>

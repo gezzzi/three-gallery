@@ -258,7 +258,8 @@ export async function generateCodeThumbnail(
 }
 
 /**
- * HTMLファイルのサムネイルを生成
+ * HTMLファイルのサムネイルを生成（簡略版）
+ * 最初のフレームをキャプチャする方式
  */
 export async function generateHtmlThumbnail(
   htmlContent: string,
@@ -367,7 +368,7 @@ export async function generateHtmlThumbnail(
       iframeDoc.close()
     }
     
-    // タイムアウト設定
+    // タイムアウト設定（短縮）
     setTimeout(() => {
       window.removeEventListener('message', handleMessage)
       window.removeEventListener('message', captureListener)
@@ -375,7 +376,7 @@ export async function generateHtmlThumbnail(
         document.body.removeChild(iframe)
       }
       reject(new Error('Thumbnail generation timeout'))
-    }, 15000)
+    }, 5000) // 5秒に短縮
   })
 }
 

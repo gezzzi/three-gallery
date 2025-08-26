@@ -21,11 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="light" suppressHydrationWarning>
+    <html lang="ja" className="dark" suppressHydrationWarning>
       <head>
         <meta name="darkreader-lock" />
       </head>
-      <body className={`${notoSansJP.variable} font-sans antialiased light`} suppressHydrationWarning>
+      <body className={`${notoSansJP.variable} font-sans antialiased dark bg-gray-900 text-gray-100`} suppressHydrationWarning>
         <AuthProvider>
           <LayoutClient>
             {children}

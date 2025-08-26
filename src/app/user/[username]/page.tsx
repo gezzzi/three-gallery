@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import ModelCard from '@/components/ui/ModelCard'
-import { mockModels, mockUsers } from '@/lib/mockData'
 import { Model, User } from '@/types'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { 
@@ -37,13 +36,14 @@ export default function UserProfilePage() {
   })
 
   useEffect(() => {
-    // モックデータから該当ユーザーを取得
-    const foundUser = mockUsers.find(u => u.username === username)
+    // TODO: バックエンドからユーザー情報を取得
+    // 現在はデータがありません
+    const foundUser: User | null = null
     if (foundUser) {
       setUser(foundUser)
       
       // ユーザーの作品を取得
-      const userModels = mockModels.filter(m => m.userId === foundUser.id)
+      const userModels: Model[] = []
       setModels(userModels)
       
       // 統計情報を計算
@@ -78,11 +78,11 @@ export default function UserProfilePage() {
       case 'models':
         return models
       case 'likes':
-        // いいねした作品（モックデータ）
-        return mockModels.slice(0, 2)
+        // いいねした作品
+        return []
       case 'bookmarks':
-        // ブックマークした作品（モックデータ）
-        return mockModels.slice(2, 4)
+        // ブックマークした作品
+        return []
       default:
         return []
     }

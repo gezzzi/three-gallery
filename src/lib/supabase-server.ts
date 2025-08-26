@@ -20,6 +20,7 @@ export async function createServerClient() {
           } catch (error) {
             // Server Components内でのクッキー設定はエラーになる可能性があるため
             // エラーをキャッチして続行
+            console.log('[supabase-server] Cookie set error (safe to ignore in Server Components):', error)
           }
         },
       },

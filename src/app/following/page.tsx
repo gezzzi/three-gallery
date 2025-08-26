@@ -7,7 +7,6 @@ import { Users, UserPlus, LogIn, Loader2 } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model, User } from '@/types'
 import { useStore } from '@/store/useStore'
-import { mockModels, mockUsers } from '@/lib/mockData'
 import dynamic from 'next/dynamic'
 import { useFollow } from '@/hooks/useFollow'
 
@@ -93,11 +92,11 @@ export default function FollowingPage() {
     setLoading(true)
     try {
       // フォロー中のユーザーを取得
-      const followedUsers = mockUsers.filter(u => followingUsers.includes(u.id))
+      const followedUsers: User[] = []
       setFollowingUsersData(followedUsers)
       
       // フォロー中のユーザーのモデルを取得
-      const allModels = [...storedModels, ...mockModels]
+      const allModels = [...storedModels]
       const uniqueModels = Array.from(
         new Map(allModels.map(model => [model.id, model])).values()
       )
@@ -231,7 +230,7 @@ export default function FollowingPage() {
         followingUsersData.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {followingUsersData.map((userData) => {
-              const userModelsCount = [...storedModels, ...mockModels].filter(
+              const userModelsCount = [...storedModels].filter(
                 m => m.userId === userData.id
               ).length
               

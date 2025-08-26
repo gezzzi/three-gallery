@@ -26,20 +26,52 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Supabaseクライアントの作成
+    // Supabaseクライアントの作成（クッキーベース認証用）
     const supabase = await createServerClient()
     
-    // 認証チェック
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // クッキーを確認
+    console.log('[Upload API] 認証確認開始')
     
-    console.log('[Upload API] ユーザー:', user?.email, 'エラー:', authError?.message)
+    // 認証チェック - getSession()を使用してクッキーベースの認証を確認
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
-    if (authError || !user) {
-      console.error('[Upload API] 認証エラー:', authError)
+    if (sessionError) {
+      console.error('[Upload API] セッション取得エラー:', sessionError)
+      return NextResponse.json({ error: '認証エラーが発生しました' }, { status: 401 })
+    }
+    
+    console.log('[Upload API] セッション状態:', {
+      hasSession: !!session,
+      userEmail: session?.user?.email,
+      userId: session?.user?.id
+    })
+    
+    let user = session?.user
+    
+    if (!session || !session.user) {
+      console.error('[Upload API] セッションが見つかりません')
+      // getUser()でも試してみる
+      const { data: { user: userFromGetUser }, error: userError } = await supabase.auth.getUser()
+      console.log('[Upload API] getUser結果:', {
+        hasUser: !!userFromGetUser,
+        userEmail: userFromGetUser?.email,
+        error: userError?.message
+      })
+      
+      if (!userFromGetUser) {
+        return NextResponse.json({ error: '認証が必要です。ログインし直してください。' }, { status: 401 })
+      }
+      
+      // getUserで取得できた場合は使用
+      user = userFromGetUser
+    }
+    
+    if (!user) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
     }
+    
     const formData = await request.formData()
-    const uploadType = formData.get('uploadType') as string
+    const uploadType = 'html' // HTMLのみサポート
     const title = formData.get('title') as string
     const description = formData.get('description') as string
     const tags = formData.get('tags') as string
@@ -47,7 +79,6 @@ export async function POST(request: NextRequest) {
     const isCommercialOk = formData.get('isCommercialOk') === 'true'
     const status = formData.get('status') as string
     const htmlContent = formData.get('htmlContent') as string
-    const modelFile = formData.get('modelFile') as File
     
     // 音楽関連のデータを取得
     const musicType = formData.get('musicType') as string
@@ -55,7 +86,6 @@ export async function POST(request: NextRequest) {
     const selectedBgmId = formData.get('selectedBgmId') as string
     
     // サムネイル関連のデータを取得
-    const thumbnailOption = formData.get('thumbnailOption') as string
     const customThumbnailUrl = formData.get('thumbnailUrl') as string | null
     
     console.log('[Upload API] 音楽データ受信:', {
@@ -94,12 +124,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (uploadType === 'html' && !htmlContent) {
+    if (!htmlContent) {
       return NextResponse.json({ error: 'HTMLコンテンツが必要です' }, { status: 400 })
-    }
-    
-    if (uploadType === 'model' && !modelFile) {
-      return NextResponse.json({ error: '3Dモデルファイルが必要です' }, { status: 400 })
     }
 
     // タグを配列に変換
@@ -125,78 +151,15 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    let modelData: ModelData | null = null
-    
-    if (uploadType === 'code') {
-      // Three.jsコードの場合
-      const code = formData.get('code') as string
-      modelData = {
-        file_url: 'threejs-code',
-        preview_url: 'threejs-code',
-        thumbnail_url: customThumbnailUrl || '/placeholder-code.svg',
-        file_size: new Blob([code]).size,
-        metadata: {
-          type: 'threejs-code',
-          code: code
-        }
-      }
-    } else if (uploadType === 'html') {
-      modelData = {
-        file_url: 'threejs-html',
-        preview_url: 'threejs-html',
-        thumbnail_url: customThumbnailUrl || '/placeholder-html.svg',
-        file_size: new Blob([htmlContent]).size,
-        metadata: {
-          type: 'threejs-html',
-          htmlContent: htmlContent
-        }
-      }
-    } else if (uploadType === 'model') {
-      // 3Dモデルファイルの処理
-      const fileName = (modelFile as File)?.name || 'model.glb'
-      const fileSize = (modelFile as File)?.size || 0
-      
-      // ファイル名をサニタイズ（特殊文字を除去）
-      const sanitizedFileName = fileName
-        .replace(/[^a-zA-Z0-9._-]/g, '_') // 特殊文字をアンダースコアに置換
-        .replace(/_{2,}/g, '_') // 連続するアンダースコアを1つに
-      
-      // ファイル名をユニークにするためにタイムスタンプを追加
-      const timestamp = Date.now()
-      const uniqueFileName = `${userId}/${timestamp}_${sanitizedFileName}`
-      
-      // Supabaseストレージにファイルをアップロード
-      const arrayBuffer = await modelFile.arrayBuffer()
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('models')
-        .upload(uniqueFileName, arrayBuffer, {
-          contentType: modelFile.type || 'model/gltf-binary',
-          upsert: false
-        })
-      
-      if (uploadError) {
-        console.error('Model upload error:', uploadError)
-        return NextResponse.json({ 
-          error: `モデルファイルのアップロードに失敗しました: ${uploadError.message}` 
-        }, { status: 500 })
-      }
-      
-      // 公開URLを取得
-      const { data: publicUrlData } = supabase.storage
-        .from('models')
-        .getPublicUrl(uniqueFileName)
-      
-      modelData = {
-        file_url: publicUrlData.publicUrl,
-        preview_url: publicUrlData.publicUrl, // 3DモデルのプレビューURLは同じ
-        original_file_url: publicUrlData.publicUrl, // オリジナルファイルURL
-        thumbnail_url: customThumbnailUrl || '/placeholder-3d.svg',
-        file_size: fileSize,
-        metadata: {
-          type: '3d-model',
-          fileName: fileName,
-          fileSize: fileSize
-        }
+    // HTMLコンテンツのデータを準備
+    const modelData: ModelData = {
+      file_url: 'threejs-html',
+      preview_url: 'threejs-html',
+      thumbnail_url: customThumbnailUrl || '/placeholder-html.svg',
+      file_size: new Blob([htmlContent]).size,
+      metadata: {
+        type: 'threejs-html',
+        htmlContent: htmlContent
       }
     }
     

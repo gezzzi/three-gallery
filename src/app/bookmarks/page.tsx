@@ -7,7 +7,6 @@ import { Bookmark, LogIn, Loader2 } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
 import { useStore } from '@/store/useStore'
-import { mockModels } from '@/lib/mockData'
 import dynamic from 'next/dynamic'
 
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
@@ -33,8 +32,8 @@ export default function BookmarksPage() {
   const fetchBookmarkedModels = async () => {
     setLoading(true)
     try {
-      // ローカルストアとモックデータから、ブックマークされたモデルを取得
-      const allModels = [...storedModels, ...mockModels]
+      // ローカルストアから、ブックマークされたモデルを取得
+      const allModels = [...storedModels]
       const uniqueModels = Array.from(
         new Map(allModels.map(model => [model.id, model])).values()
       )

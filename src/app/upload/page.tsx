@@ -6,11 +6,10 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/contexts/AuthContext'
 import { defaultBGMs } from '@/lib/defaultBgm'
-import { supabase } from '@/lib/supabase'
-import { generateModelThumbnail, generateHtmlThumbnail } from '@/lib/thumbnailGenerator'
+import { createClient } from '@/lib/supabase-client'
+import { generateSimpleHtmlThumbnail } from '@/lib/simpleThumbnailGenerator'
 
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), { ssr: false })
-const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer'), { ssr: false })
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
 
 const licenses = [
@@ -27,11 +26,9 @@ export default function UploadPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [uploadType, setUploadType] = useState<'html' | 'model'>('html')
+  const [uploadType] = useState<'html'>('html')
   const [htmlContent, setHtmlContent] = useState('')
   const [htmlInputType, setHtmlInputType] = useState<'file' | 'code'>('file')
-  const [modelFile, setModelFile] = useState<File | null>(null)
-  const [modelUrl, setModelUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -63,16 +60,6 @@ export default function UploadPage() {
     }
   }
 
-  const handleModelFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && (file.name.endsWith('.glb') || file.name.endsWith('.gltf'))) {
-      setModelFile(file)
-      const url = URL.createObjectURL(file)
-      setModelUrl(url)
-    } else {
-      alert('GLBまたはGLTF形式のファイルをアップロードしてください')
-    }
-  }
 
   const handleMusicFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -137,16 +124,13 @@ export default function UploadPage() {
 
   useEffect(() => {
     return () => {
-      if (modelUrl) {
-        URL.revokeObjectURL(modelUrl)
-      }
       // クリーンアップ時にプレビュー音声を停止
       if (previewAudio) {
         previewAudio.pause()
         previewAudio.currentTime = 0
       }
     }
-  }, [modelUrl, previewAudio])
+  }, [previewAudio])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -176,13 +160,8 @@ export default function UploadPage() {
       return
     }
     
-    if (uploadType === 'html' && !htmlContent) {
+    if (!htmlContent) {
       alert('HTMLコンテンツを入力またはファイルをアップロードしてください')
-      return
-    }
-    
-    if (uploadType === 'model' && !modelFile) {
-      alert('3Dモデルファイルをアップロードしてください')
       return
     }
     
@@ -253,14 +232,11 @@ export default function UploadPage() {
         data.append('selectedBgmId', selectedBgmId)
       }
       
-      if (uploadType === 'html') {
-        data.append('htmlContent', htmlContent)
-      } else if (uploadType === 'model') {
-        data.append('modelFile', modelFile!)
-      }
+      data.append('htmlContent', htmlContent)
       
-      // Supabaseのセッショントークンを取得
+      // Supabaseクライアントを作成してセッショントークンを取得
       console.log('[Upload] セッション取得中...')
+      const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       console.log('[Upload] セッション:', session?.user?.email, 'トークン有無:', !!session?.access_token)
       
@@ -274,6 +250,7 @@ export default function UploadPage() {
         method: 'POST',
         body: data,
         headers,
+        credentials: 'include', // クッキーを含める
       })
       console.log('[Upload] APIレスポンス:', response.status)
       
@@ -286,50 +263,49 @@ export default function UploadPage() {
         if (thumbnailOption === 'auto' && result.modelId) {
           console.log('[Upload] サムネイル自動生成開始')
           
-          try {
-            let thumbnailBlob: Blob | null = null
-            
-            // アップロードタイプに応じてサムネイルを生成
-            if (uploadType === 'model' && modelUrl) {
-              thumbnailBlob = await generateModelThumbnail(modelUrl)
-            } else if (uploadType === 'html') {
-              thumbnailBlob = await generateHtmlThumbnail(htmlContent)
-            }
-            
-            if (thumbnailBlob) {
-              // 生成したサムネイルをアップロード
-              const thumbnailFormData = new FormData()
-              thumbnailFormData.append('file', thumbnailBlob, 'thumbnail.jpg')
-              thumbnailFormData.append('type', 'auto-generated')
+          // 非同期でサムネイルを生成（メインのアップロード処理をブロックしない）
+          setTimeout(async () => {
+            try {
+              // HTMLコンテンツのサムネイルを生成
+              const thumbnailBlob = await generateSimpleHtmlThumbnail(htmlContent)
               
-              const thumbnailResponse = await fetch('/api/upload/thumbnail', {
-                method: 'POST',
-                body: thumbnailFormData,
-                headers
-              })
-              
-              if (thumbnailResponse.ok) {
-                const thumbnailData = await thumbnailResponse.json()
+              if (thumbnailBlob) {
+                // 生成したサムネイルをアップロード
+                const thumbnailFormData = new FormData()
+                thumbnailFormData.append('file', thumbnailBlob, 'thumbnail.jpg')
+                thumbnailFormData.append('type', 'auto-generated')
                 
-                // モデルのthumbnail_urlを更新
-                await fetch(`/api/models/${result.modelId}`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    ...headers
-                  },
-                  body: JSON.stringify({
-                    thumbnail_url: thumbnailData.url
-                  })
+                const thumbnailResponse = await fetch('/api/upload/thumbnail', {
+                  method: 'POST',
+                  body: thumbnailFormData,
+                  headers,
+                  credentials: 'include'
                 })
                 
-                console.log('[Upload] サムネイル自動生成・更新完了')
+                if (thumbnailResponse.ok) {
+                  const thumbnailData = await thumbnailResponse.json()
+                  
+                  // モデルのthumbnail_urlを更新
+                  await fetch(`/api/models/${result.modelId}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...headers
+                    },
+                    body: JSON.stringify({
+                      thumbnail_url: thumbnailData.url
+                    }),
+                    credentials: 'include'
+                  })
+                  
+                  console.log('[Upload] サムネイル自動生成・更新完了')
+                }
               }
+            } catch (error) {
+              console.error('[Upload] サムネイル自動生成エラー:', error)
+              // サムネイル生成に失敗してもユーザーには影響しない
             }
-          } catch (error) {
-            console.error('[Upload] サムネイル自動生成エラー:', error)
-            // サムネイル生成に失敗してもアップロード自体は成功とする
-          }
+          }, 100) // 少し遅延させて実行
         }
         
         // ホームページにリダイレクト
@@ -351,8 +327,8 @@ export default function UploadPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-700 border-t-blue-500 mx-auto dark:border-gray-600 dark:border-t-blue-400" />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
         </div>
       </div>
     )
@@ -363,14 +339,14 @@ export default function UploadPage() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center max-w-md">
-          <LogIn className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">ログインが必要です</h2>
-          <p className="text-gray-600 mb-6">
+          <LogIn className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">ログインが必要です</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             コンテンツをアップロードするにはログインが必要です
           </p>
           <button
             onClick={() => setShowAuthModal(true)}
-            className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-500 px-6 py-3 font-medium text-white hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             ログイン / 新規登録
           </button>
@@ -388,42 +364,15 @@ export default function UploadPage() {
 
   return (
     <div className="mx-auto max-w-6xl p-3 sm:p-6">
-      <h1 className="mb-4 sm:mb-8 text-xl sm:text-3xl font-bold">Three.jsコンテンツをアップロード</h1>
+      <h1 className="mb-4 sm:mb-8 text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Three.jsコンテンツをアップロード</h1>
 
-      {/* アップロードタイプ選択 */}
-      <div className="mb-4 sm:mb-6 rounded-lg bg-white p-3 sm:p-4">
-        <label className="mb-2 block text-sm font-medium">アップロードタイプ</label>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              value="html"
-              checked={uploadType === 'html'}
-              onChange={(e) => setUploadType(e.target.value as 'html' | 'model')}
-              className="h-4 w-4"
-            />
-            <span className="text-sm sm:text-base">HTMLファイル</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              value="model"
-              checked={uploadType === 'model'}
-              onChange={(e) => setUploadType(e.target.value as 'html' | 'model')}
-              className="h-4 w-4"
-            />
-            <span className="text-sm sm:text-base">3Dモデル (GLB/GLTF)</span>
-          </label>
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* HTMLアップロード */}
-        {uploadType === 'html' ? (
           <div className="space-y-4">
             {/* HTML入力方法選択 */}
-            <div className="rounded-lg bg-white p-4">
-              <label className="mb-2 block text-sm font-medium">HTML入力方法</label>
+            <div className="rounded-lg bg-gray-800 p-4 dark:bg-gray-800">
+              <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">HTML入力方法</label>
               <div className="flex gap-4 mb-4">
                 <label className="flex items-center gap-2">
                   <input
@@ -450,22 +399,22 @@ export default function UploadPage() {
               {/* HTMLファイルアップロード */}
               {htmlInputType === 'file' ? (
                 <>
-                  <label className="mb-2 block text-sm font-medium">HTMLファイル</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">HTMLファイル</label>
                   <input
                     type="file"
                     accept=".html"
                     onChange={handleFileUpload}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                   />
                 </>
               ) : (
                 /* HTMLコード入力 */
                 <>
-                  <label className="mb-2 block text-sm font-medium">HTMLコード</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">HTMLコード</label>
                   <textarea
                     value={htmlContent}
                     onChange={(e) => setHtmlContent(e.target.value)}
-                    className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none font-mono text-sm"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400 font-mono text-sm"
                     rows={15}
                     placeholder="HTMLコードをここに貼り付けてください..."
                   />
@@ -475,49 +424,15 @@ export default function UploadPage() {
             
             {/* HTMLプレビュー */}
             {htmlContent && (
-              <div className="rounded-lg bg-white">
+              <div className="rounded-lg bg-gray-800 dark:bg-gray-800">
                 <h3 className="border-b px-4 py-2 font-medium">プレビュー</h3>
                 <HtmlPreview htmlContent={htmlContent} height="500px" />
               </div>
             )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {/* 3Dモデルファイルアップロード */}
-            <div className="rounded-lg bg-white p-4">
-              <label className="mb-2 block text-sm font-medium">3Dモデルファイル (GLB/GLTF)</label>
-              <input
-                type="file"
-                accept=".glb,.gltf"
-                onChange={handleModelFileUpload}
-                className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
-              />
-              {modelFile && (
-                <p className="mt-2 text-sm text-gray-600">
-                  ファイル: {modelFile.name} ({(modelFile.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
-              )}
-            </div>
-            
-            {/* 3Dモデルプレビュー */}
-            {modelUrl && (
-              <div className="rounded-lg bg-white">
-                <h3 className="border-b px-4 py-2 font-medium">プレビュー</h3>
-                <div className="h-[500px]">
-                  <ModelViewer 
-                    modelUrl={modelUrl}
-                    modelType="file"
-                    autoRotate={true}
-                    showGrid={true}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* サムネイル設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <Image className="h-4 w-4 sm:h-5 sm:w-5" aria-label="サムネイル設定" />
             サムネイル設定
@@ -555,7 +470,7 @@ export default function UploadPage() {
             
             {thumbnailOption === 'auto' ? (
               <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-400 dark:text-gray-400">
                   アップロード時に3Dシーンから自動的に高品質なサムネイルを生成します。
                 </p>
                 <div className="mt-2 text-xs text-gray-500">
@@ -566,18 +481,18 @@ export default function UploadPage() {
               </div>
             ) : (
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">
                   サムネイル画像 (JPEG, PNG, WebP)
                 </label>
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={handleCustomThumbnailUpload}
-                  className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                 />
                 {customThumbnail && (
                   <div className="mt-4">
-                    <p className="mb-2 text-sm text-gray-600">
+                    <p className="mb-2 text-sm text-gray-400 dark:text-gray-400">
                       ファイル: {customThumbnail.name} ({(customThumbnail.size / 1024 / 1024).toFixed(2)} MB)
                     </p>
                     {customThumbnailUrl && (
@@ -595,34 +510,34 @@ export default function UploadPage() {
         </div>
 
         {/* 基本情報 */}
-        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <Info className="h-4 w-4 sm:h-5 sm:w-5" />
             基本情報
           </h2>
           
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
               タイトル <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
               placeholder="例: 回転するキューブ"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
               説明 <span className="text-red-500">*</span>
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
               rows={4}
               placeholder="コードの説明や使い方を入力してください"
               required
@@ -630,14 +545,14 @@ export default function UploadPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
               <Tag className="inline h-4 w-4" /> タグ <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
               placeholder="Three.js, コード, チュートリアル（カンマ区切り）"
               required
             />
@@ -645,15 +560,15 @@ export default function UploadPage() {
         </div>
 
         {/* ライセンス設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="text-base sm:text-lg font-semibold">ライセンス設定</h2>
           
           <div>
-            <label className="mb-2 block text-sm font-medium">ライセンス</label>
+            <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ライセンス</label>
             <select
               value={formData.license}
               onChange={(e) => setFormData({ ...formData, license: e.target.value })}
-              className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
             >
               {licenses.map((license) => (
                 <option key={license.id} value={license.id}>
@@ -678,7 +593,7 @@ export default function UploadPage() {
         </div>
 
         {/* BGM設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <Music className="h-4 w-4 sm:h-5 sm:w-5" />
             BGM設定
@@ -711,7 +626,7 @@ export default function UploadPage() {
           {/* デフォルトBGM選択 */}
           {musicType === 'default' && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium">BGMを選択</label>
+              <label className="block text-sm font-medium text-gray-300 dark:text-gray-300">BGMを選択</label>
               
               {/* 選択中のBGM表示とドロップダウントグル */}
               <div 
@@ -724,7 +639,7 @@ export default function UploadPage() {
                     <div className="font-medium">
                       {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.name || 'BGMを選択'}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-400 dark:text-gray-400">
                       {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.genre}
                     </div>
                   </div>
@@ -789,7 +704,7 @@ export default function UploadPage() {
               
               {/* 選択中のBGMの説明 */}
               {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.description && (
-                <p className="text-sm text-gray-600 italic">
+                <p className="text-sm text-gray-400 dark:text-gray-400 italic">
                   {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.description}
                 </p>
               )}
@@ -799,17 +714,17 @@ export default function UploadPage() {
           {/* BGMアップロード */}
           {musicType === 'upload' && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">
                 音楽ファイル (MP3, WAV, OGG, M4A - 最大10MB)
               </label>
               <input
                 type="file"
                 accept=".mp3,.wav,.ogg,.m4a,audio/*"
                 onChange={handleMusicFileUpload}
-                className="w-full rounded-lg border px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
               />
               {musicFile && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-400 dark:text-gray-400">
                   ファイル: {musicFile.name} ({(musicFile.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
               )}
@@ -818,7 +733,7 @@ export default function UploadPage() {
         </div>
 
         {/* 公開設定 */}
-        <div className="space-y-4 rounded-lg bg-white p-3 sm:p-6">
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
             公開設定
@@ -851,22 +766,21 @@ export default function UploadPage() {
           <button
             type="submit"
             disabled={
-              (uploadType === 'html' && !htmlContent) || 
-              (uploadType === 'model' && !modelFile) || 
+              !htmlContent || 
               !formData.title.trim() || 
               !formData.description.trim() || 
               !formData.tags.trim() || 
               (musicType === 'upload' && !musicFile) ||
               isUploading
             }
-            className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="flex-1 rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
           >
             {isUploading ? 'アップロード中...' : 'アップロード'}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-lg border border-gray-300 px-6 py-3 font-medium hover:bg-gray-50"
+            className="rounded-lg border border-gray-700 px-6 py-3 font-medium hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             キャンセル
           </button>

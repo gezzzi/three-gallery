@@ -35,16 +35,31 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // 外側クリックで閉じる
+  // 外側クリックで閉じる（通知ボタン自体は除外）
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose()
+      const target = event.target as Node
+      
+      // ドロップダウン内のクリックは無視
+      if (dropdownRef.current && dropdownRef.current.contains(target)) {
+        return
       }
+      
+      // 通知ボタンのクリックは無視（ボタン自体のトグル処理に任せる）
+      const notificationButton = document.querySelector('[aria-label="通知"]')
+      if (notificationButton && notificationButton.contains(target)) {
+        return
+      }
+      
+      // それ以外の外側クリックで閉じる
+      onClose()
     }
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
+      // クリックイベントを少し遅延させて、ボタンのクリックイベントが先に処理されるようにする
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside)
+      }, 0)
     }
 
     return () => {
@@ -122,21 +137,21 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 mt-2 w-96 rounded-lg bg-white shadow-xl border z-50 max-h-[600px] overflow-hidden flex flex-col"
+      className="absolute right-0 mt-2 w-96 rounded-lg bg-gray-800 shadow-xl border border-gray-700 z-50 max-h-[600px] overflow-hidden flex flex-col"
     >
       {/* ヘッダー */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h3 className="font-semibold text-lg">通知</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+        <h3 className="font-semibold text-lg text-gray-100">通知</h3>
         <div className="flex items-center gap-2">
           {unreadNotificationCount > 0 && (
             <>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-400">
                 {unreadNotificationCount}件の未読
               </span>
               <button
                 onClick={handleMarkAllAsRead}
                 disabled={isLoading}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                className="text-sm text-blue-400 hover:text-blue-500 font-medium disabled:opacity-50"
               >
                 すべて既読にする
               </button>
@@ -144,7 +159,7 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
           )}
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100"
+            className="p-1 rounded hover:bg-gray-700 text-gray-400"
           >
             <X className="h-4 w-4" />
           </button>
@@ -154,20 +169,20 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
       {/* 通知リスト */}
       <div className="flex-1 overflow-y-auto">
         {notifications.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <div className="p-8 text-center text-gray-400">
+            <Bell className="h-12 w-12 mx-auto mb-3 text-gray-600" />
             <p>通知はありません</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-gray-700">
             {notifications.map((notification) => {
               const Icon = notificationIcons[notification.type]
               return (
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-4 hover:bg-gray-50 cursor-pointer transition-colors relative group",
-                    !notification.isRead && "bg-blue-50 hover:bg-blue-100"
+                    "p-4 hover:bg-gray-700 cursor-pointer transition-colors relative group",
+                    !notification.isRead && "bg-blue-900/20 hover:bg-blue-900/30"
                   )}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -175,24 +190,24 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                     {/* アイコン */}
                     <div className={cn(
                       "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
-                      notification.type === 'new_follower' && "bg-purple-100 text-purple-600",
-                      notification.type === 'like' && "bg-red-100 text-red-600",
-                      notification.type === 'bookmark' && "bg-yellow-100 text-yellow-600",
-                      notification.type === 'download' && "bg-green-100 text-green-600",
-                      notification.type === 'new_upload' && "bg-blue-100 text-blue-600",
-                      notification.type === 'view_milestone' && "bg-indigo-100 text-indigo-600",
-                      notification.type === 'system' && "bg-gray-100 text-gray-600"
+                      notification.type === 'new_follower' && "bg-purple-900/20 text-purple-400",
+                      notification.type === 'like' && "bg-red-900/20 text-red-400",
+                      notification.type === 'bookmark' && "bg-yellow-900/20 text-yellow-400",
+                      notification.type === 'download' && "bg-green-900/20 text-green-400",
+                      notification.type === 'new_upload' && "bg-blue-900/20 text-blue-400",
+                      notification.type === 'view_milestone' && "bg-indigo-900/20 text-indigo-400",
+                      notification.type === 'system' && "bg-gray-700 text-gray-400"
                     )}>
                       <Icon className="h-5 w-5" />
                     </div>
 
                     {/* 内容 */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{notification.title}</p>
-                      <p className="text-sm text-gray-600 mt-1 break-words">
+                      <p className="font-medium text-sm text-gray-100">{notification.title}</p>
+                      <p className="text-sm text-gray-400 mt-1 break-words">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-gray-500 mt-2">
                         {formatDistanceToNow(new Date(notification.createdAt), {
                           addSuffix: true,
                           locale: ja
@@ -208,10 +223,10 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                             e.stopPropagation()
                             handleMarkAsRead(notification.id)
                           }}
-                          className="p-1.5 rounded hover:bg-gray-200"
+                          className="p-1.5 rounded hover:bg-gray-600"
                           title="既読にする"
                         >
-                          <Check className="h-4 w-4 text-gray-600" />
+                          <Check className="h-4 w-4 text-gray-400" />
                         </button>
                       )}
                       <button
@@ -222,14 +237,14 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                         className="p-1.5 rounded hover:bg-gray-200"
                         title="削除"
                       >
-                        <Trash2 className="h-4 w-4 text-gray-600" />
+                        <Trash2 className="h-4 w-4 text-gray-400" />
                       </button>
                     </div>
                   </div>
 
                   {/* 未読インジケーター */}
                   {!notification.isRead && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400" />
                   )}
                 </div>
               )

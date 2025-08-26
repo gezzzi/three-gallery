@@ -55,7 +55,7 @@ export default function Sidebar() {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-16 h-[calc(100vh-64px)] overflow-y-auto border-r bg-white transition-transform duration-300",
+      "fixed left-0 top-16 h-[calc(100vh-64px)] overflow-y-auto border border-gray-700 bg-gray-800 transition-transform duration-300",
       // モバイルではドロワーとして動作
       isMobile ? "w-64 z-40" : "w-64",
       sidebarState ? "translate-x-0" : "-translate-x-full"
@@ -74,8 +74,8 @@ export default function Sidebar() {
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
                     isActive
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-900/20 text-blue-400 font-medium'
+                      : 'text-gray-300 hover:bg-gray-700'
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -91,13 +91,13 @@ export default function Sidebar() {
 
       {/* 人気のタグ */}
       <div className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-gray-600">人気のタグ</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gray-400">人気のタグ</h3>
         <div className="flex flex-wrap gap-2">
           {popularTags.map((tag) => (
             <Link
               key={tag}
               href={`/search?tag=${encodeURIComponent(tag)}`}
-              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center gap-1 rounded-full bg-gray-800 px-3 py-1 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
             >
               <Tag className="h-3 w-3" />
               {tag}
@@ -109,13 +109,13 @@ export default function Sidebar() {
       <div className="mx-4 my-2 border-t" />
 
       {/* フッター */}
-      <div className="p-4 text-xs text-gray-500">
+      <div className="p-4 text-xs text-gray-400">
         <div className="space-y-1">
-          <Link href="/about" className="hover:text-gray-700">運営者</Link>
+          <Link href="/about" className="hover:text-gray-300">運営者</Link>
           <span className="mx-1">·</span>
-          <Link href="/terms" className="hover:text-gray-700">利用規約</Link>
+          <Link href="/terms" className="hover:text-gray-300">利用規約</Link>
           <span className="mx-1">·</span>
-          <Link href="/privacy" className="hover:text-gray-700">プライバシー</Link>
+          <Link href="/privacy" className="hover:text-gray-300">プライバシー</Link>
         </div>
         <div className="mt-2">
           © 2025 ThreeGallery

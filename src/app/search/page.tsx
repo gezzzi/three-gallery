@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ModelCard from '@/components/ui/ModelCard'
-import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { Search, Filter, X } from 'lucide-react'
 
@@ -14,7 +13,6 @@ const categories = [
   '乗り物',
   '自然',
   '武器',
-  'アニメーション',
   'ローポリ',
   'リアル',
   'SF',
@@ -42,7 +40,6 @@ function SearchContent() {
   
   const [filters, setFilters] = useState({
     category: initialTag || 'すべて',
-    hasAnimation: 'all' as 'all' | 'yes' | 'no',
     license: 'all',
     sortBy: 'relevance' as 'relevance' | 'newest' | 'popular' | 'downloads',
   })
@@ -51,7 +48,7 @@ function SearchContent() {
     setIsLoading(true)
     
     setTimeout(() => {
-      let filtered = [...mockModels]
+      let filtered: Model[] = []
       
       // テキスト検索
       if (searchQuery) {
@@ -70,12 +67,6 @@ function SearchContent() {
         )
       }
       
-      // アニメーションフィルタ
-      if (filters.hasAnimation === 'yes') {
-        filtered = filtered.filter(model => model.hasAnimation)
-      } else if (filters.hasAnimation === 'no') {
-        filtered = filtered.filter(model => !model.hasAnimation)
-      }
       
       // 価格フィルタ（料金機能削除のため無効化）
       // if (filters.priceRange === 'free') {
@@ -135,7 +126,7 @@ function SearchContent() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="3Dモデルを検索..."
+              placeholder="作品を検索..."
               className="w-full rounded-lg border bg-white py-3 pl-10 pr-4 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -184,19 +175,6 @@ function SearchContent() {
               </select>
             </div>
 
-            {/* アニメーション */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">アニメーション</label>
-              <select
-                value={filters.hasAnimation}
-                onChange={(e) => setFilters({ ...filters, hasAnimation: e.target.value as 'all' | 'yes' | 'no' })}
-                className="w-full rounded-lg border px-3 py-2"
-              >
-                <option value="all">すべて</option>
-                <option value="yes">あり</option>
-                <option value="no">なし</option>
-              </select>
-            </div>
 
 
             {/* ライセンス */}
@@ -237,15 +215,6 @@ function SearchContent() {
                 className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
               >
                 {filters.category}
-                <X className="h-3 w-3" />
-              </button>
-            )}
-            {filters.hasAnimation !== 'all' && (
-              <button
-                onClick={() => clearFilter('hasAnimation')}
-                className="flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
-              >
-                アニメーション: {filters.hasAnimation === 'yes' ? 'あり' : 'なし'}
                 <X className="h-3 w-3" />
               </button>
             )}

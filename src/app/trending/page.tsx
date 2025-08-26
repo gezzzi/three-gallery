@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, Clock, Flame, Award } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
-import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { supabase } from '@/lib/supabase'
 
@@ -21,7 +20,6 @@ const categories = [
   { id: 'vehicle', label: '乗り物' },
   { id: 'nature', label: '自然' },
   { id: 'weapon', label: '武器' },
-  { id: 'animation', label: 'アニメーション' },
   { id: 'code', label: 'Three.jsコード' },
 ]
 
@@ -46,8 +44,8 @@ export default function TrendingPage() {
         
         if (error) {
           console.error('Error fetching models:', error)
-          // エラー時はモックデータのみを使用
-          models = mockModels
+          // エラー時は空配列を使用
+          models = []
         } else if (supabaseModels && supabaseModels.length > 0) {
           // Supabaseのデータを適切な形式に変換
           models = supabaseModels.map(model => ({
@@ -70,18 +68,15 @@ export default function TrendingPage() {
             licenseType: model.license_type || 'CC BY',
             isCommercialOk: model.is_commercial_ok || false,
             fileSize: model.file_size || 0,
-            hasAnimation: model.has_animation || false,
-            polygonCount: model.polygon_count,
-            animationDuration: model.animation_duration,
-            modelType: model.upload_type === 'code' ? 'code' as const : undefined,
+            uploadType: model.upload_type,
             // BGMデータを追加
             musicType: model.bgm_type || (model.metadata?.music_type as string) || undefined,
             musicUrl: model.bgm_url || (model.metadata?.music_url as string) || undefined,
             musicName: model.bgm_name || (model.metadata?.music_name as string) || undefined
           }))
         } else {
-          // データがない場合はモックデータを使用
-          models = mockModels
+          // データがない場合は空配列を使用
+          models = []
         }
         
         // カテゴリでフィルタリング
@@ -93,8 +88,7 @@ export default function TrendingPage() {
             if (selectedCategory === 'vehicle') return model.tags.includes('乗り物')
             if (selectedCategory === 'nature') return model.tags.includes('自然')
             if (selectedCategory === 'weapon') return model.tags.includes('武器')
-            if (selectedCategory === 'animation') return model.hasAnimation
-            if (selectedCategory === 'code') return model.modelType === 'code'
+            if (selectedCategory === 'code') return model.uploadType === 'code'
             return true
           })
         }
@@ -113,8 +107,8 @@ export default function TrendingPage() {
         setTrendingModels(sortedModels)
       } catch (error) {
         console.error('Error in fetchModels:', error)
-        // エラー時はモックデータのみを使用
-        setTrendingModels(mockModels)
+        // エラー時は空配列を使用
+        setTrendingModels([])
       } finally {
         setIsLoading(false)
       }
@@ -135,7 +129,7 @@ export default function TrendingPage() {
           トレンド
         </h1>
         <p className="mt-2 text-gray-600">
-          今話題の3Dモデルとコンテンツ
+          今話題のThree.js作品とコンテンツ
         </p>
       </div>
 

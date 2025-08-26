@@ -23,9 +23,6 @@ export interface Model {
   thumbnailUrl?: string
   originalFileUrl?: string
   fileSize?: number
-  polygonCount?: number
-  hasAnimation: boolean
-  animationDuration?: number
   licenseType: string
   isCommercialOk: boolean
   viewCount: number
@@ -36,7 +33,7 @@ export interface Model {
   metadata: Record<string, unknown>
   createdAt: string
   updatedAt: string
-  modelType?: 'file' | 'code'
+  uploadType?: 'html' | 'code'  // HTMLまたはThree.jsコード
   code?: string
   // 音楽関連
   musicUrl?: string

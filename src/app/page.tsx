@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import ModelCard from '@/components/ui/ModelCard'
-import { mockModels } from '@/lib/mockData'
 import { Model } from '@/types'
 import { TrendingUp, Clock, Star, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -42,8 +41,8 @@ export default function HomePage() {
         
         if (error) {
           console.error('Error fetching models:', error)
-          // エラー時はモックデータのみを使用
-          sortAndSetModels(mockModels)
+          // エラー時は空配列を使用
+          sortAndSetModels([])
         } else if (supabaseModels) {
           // Supabaseのデータを適切な形式に変換
           const formattedModels: Model[] = supabaseModels.map(model => ({
@@ -66,9 +65,7 @@ export default function HomePage() {
             licenseType: model.license_type || 'CC BY',
             isCommercialOk: model.is_commercial_ok || false,
             fileSize: model.file_size || 0,
-            hasAnimation: model.has_animation || false,
-            polygonCount: model.polygon_count,
-            animationDuration: model.animation_duration,
+            uploadType: model.upload_type, // upload_typeを追加
             // BGMデータを追加
             musicType: model.bgm_type || (model.metadata?.music_type as string) || undefined,
             musicUrl: model.bgm_url || (model.metadata?.music_url as string) || undefined,
@@ -78,13 +75,13 @@ export default function HomePage() {
           // Supabaseのデータのみを使用（ローカルストアは使用しない）
           sortAndSetModels(formattedModels)
         } else {
-          // データがない場合はモックデータのみを使用
-          sortAndSetModels(mockModels)
+          // データがない場合は空配列を使用
+          sortAndSetModels([])
         }
       } catch (error) {
         console.error('Error in fetchModels:', error)
-        // エラー時はモックデータのみを使用
-        sortAndSetModels(mockModels)
+        // エラー時は空配列を使用
+        sortAndSetModels([])
       }
     }
     
@@ -124,11 +121,11 @@ export default function HomePage() {
     <div className="p-3 sm:p-4 lg:p-6">
       {/* ヘッダー */}
       <div className="mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          3Dモデルを探す
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">
+          Three.js作品を探す
         </h1>
-        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-          クリエイターが作成した高品質な3Dモデルを見つけよう
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-400">
+          クリエイターが作成した魅力的なThree.js作品を見つけよう
         </p>
       </div>
 
@@ -145,7 +142,7 @@ export default function HomePage() {
                   className={`flex items-center gap-1 sm:gap-2 rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -157,7 +154,7 @@ export default function HomePage() {
           
           {/* 期間選択 */}
           {activeTab === 'trending' && (
-            <div className="flex gap-0.5 sm:gap-1 rounded-lg bg-white p-0.5 sm:p-1">
+            <div className="flex gap-0.5 sm:gap-1 rounded-lg bg-gray-800 p-0.5 sm:p-1">
               {timeRanges.map((range) => (
                 <button
                   key={range.id}
@@ -165,7 +162,7 @@ export default function HomePage() {
                   className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium transition-colors ${
                     timeRange === range.id
                       ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
                   {range.label}
@@ -182,7 +179,7 @@ export default function HomePage() {
           {['すべて', 'キャラクター', '建築', '乗り物', '自然', '武器', 'アニメーション'].map((category) => (
             <button
               key={category}
-              className="rounded-full border border-gray-300 bg-white px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+              className="rounded-full border border-gray-600 bg-gray-800 px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-300 hover:border-blue-400 hover:text-blue-400 transition-colors"
             >
               {category}
             </button>
@@ -195,7 +192,7 @@ export default function HomePage() {
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">読み込み中...</p>
+            <p className="mt-4 text-gray-400">読み込み中...</p>
           </div>
         </div>
       ) : (
@@ -208,7 +205,7 @@ export default function HomePage() {
           
           {/* もっと見る */}
           <div className="mt-8 text-center">
-            <button className="rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <button className="rounded-lg border border-gray-600 bg-gray-800 px-6 py-2 font-medium text-gray-300 hover:bg-gray-700 transition-colors">
               もっと見る
             </button>
           </div>
