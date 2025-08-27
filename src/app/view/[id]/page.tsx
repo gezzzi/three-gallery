@@ -219,7 +219,7 @@ export default function ViewPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-lg text-gray-600">モデルが見つかりません</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">モデルが見つかりません</p>
         </div>
       </div>
     )
@@ -257,7 +257,7 @@ export default function ViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* HTMLビューア */}
       <div className="h-[60vh] bg-gray-900 relative">
         <HtmlPreview
@@ -287,14 +287,14 @@ export default function ViewPage() {
           <div className="lg:col-span-2">
             {/* タイトルとアクション */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">{model.title}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{model.title}</h1>
               
               <div className="mt-4 flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Eye className="h-4 w-4" />
                   <span>{formatNumber(model.viewCount)} 回視聴</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Calendar className="h-4 w-4" />
                   <span>{formatDate(model.createdAt)}</span>
                 </div>
@@ -305,8 +305,8 @@ export default function ViewPage() {
                   onClick={toggleLike}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
                     isLiked
-                      ? 'bg-red-50 text-red-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
                 >
                   <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
@@ -317,8 +317,8 @@ export default function ViewPage() {
                   onClick={toggleBookmark}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
                     isBookmarked
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
                 >
                   <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
@@ -327,7 +327,7 @@ export default function ViewPage() {
                 
                 <button 
                   onClick={handleShare}
-                  className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Share2 className="h-5 w-5" />
                   <span>共有</span>
@@ -336,14 +336,14 @@ export default function ViewPage() {
             </div>
 
             {/* タブコンテンツ */}
-            <div className="rounded-lg bg-white p-6">
+            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
               <div className="mb-4 flex gap-4 border-b">
                 <button
                   onClick={() => setActiveTab('description')}
                   className={`pb-2 font-medium ${
                     activeTab === 'description'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
                   説明
@@ -352,8 +352,8 @@ export default function ViewPage() {
                   onClick={() => setActiveTab('specs')}
                   className={`pb-2 font-medium ${
                     activeTab === 'specs'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
                   スペック
@@ -362,8 +362,8 @@ export default function ViewPage() {
                   onClick={() => setActiveTab('license')}
                   className={`pb-2 font-medium ${
                     activeTab === 'license'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
                   ライセンス
@@ -372,7 +372,7 @@ export default function ViewPage() {
 
               {activeTab === 'description' && (
                 <div>
-                  <p className="whitespace-pre-wrap text-gray-700">
+                  <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                     {model.description || 'このモデルの説明はありません。'}
                   </p>
                   
@@ -383,7 +383,7 @@ export default function ViewPage() {
                           <Link
                             key={tag}
                             href={`/search?tag=${encodeURIComponent(tag)}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
+                            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                           >
                             <Tag className="h-3 w-3" />
                             {tag}
@@ -397,24 +397,24 @@ export default function ViewPage() {
 
               {activeTab === 'specs' && (
                 <div className="space-y-3">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">ファイルサイズ</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between py-2 border-b dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">ファイルサイズ</span>
+                    <span className="font-medium dark:text-gray-200">
                       {model.fileSize ? formatFileSize(model.fileSize) : 'N/A'}
                     </span>
                   </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-600">フォーマット</span>
-                    <span className="font-medium">HTML/JavaScript</span>
+                  <div className="flex justify-between py-2 border-b dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">フォーマット</span>
+                    <span className="font-medium dark:text-gray-200">HTML/JavaScript</span>
                   </div>
                 </div>
               )}
 
               {activeTab === 'license' && (
                 <div className="space-y-4">
-                  <div className="rounded-lg bg-blue-50 p-4">
-                    <h3 className="font-semibold text-blue-900">{model.licenseType}</h3>
-                    <p className="mt-2 text-sm text-blue-700">
+                  <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-300">{model.licenseType}</h3>
+                    <p className="mt-2 text-sm text-blue-700 dark:text-blue-400">
                       このモデルは{model.licenseType}ライセンスで提供されています。
                     </p>
                   </div>
@@ -430,7 +430,7 @@ export default function ViewPage() {
                           )}
                         </svg>
                       </span>
-                      <span className="text-sm">
+                      <span className="text-sm dark:text-gray-300">
                         商用利用: {model.isCommercialOk ? '可能' : '不可'}
                       </span>
                     </div>
@@ -443,8 +443,8 @@ export default function ViewPage() {
           {/* サイドバー */}
           <div className="space-y-6">
             {/* 作者情報 */}
-            <div className="rounded-lg bg-white p-6">
-              <h3 className="mb-4 font-semibold">作者</h3>
+            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
+              <h3 className="mb-4 font-semibold dark:text-white">作者</h3>
               {model.user && (
                 <Link href={`/user/${model.user.username}`} className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500">
@@ -461,32 +461,32 @@ export default function ViewPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium hover:text-blue-600">{model.user.displayName || model.user.username}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">{model.user.displayName || model.user.username}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {formatNumber(model.user.followerCount)} フォロワー
                     </p>
                   </div>
                 </Link>
               )}
               
-              <button className="mt-4 w-full rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700">
+              <button className="mt-4 w-full rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
                 フォロー
               </button>
             </div>
 
             {/* ダウンロード */}
-            <div className="rounded-lg bg-white p-6">
-              <h3 className="mb-4 font-semibold">ダウンロード</h3>
+            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
+              <h3 className="mb-4 font-semibold dark:text-white">ダウンロード</h3>
               
               <button
                 onClick={handleDownload}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white hover:bg-green-700"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
               >
                 <Download className="h-5 w-5" />
                 ダウンロード
               </button>
               
-              <div className="mt-4 space-y-2 text-sm text-gray-600">
+              <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center gap-2">
                   <Download className="h-4 w-4" />
                   <span>{formatNumber(model.downloadCount)} ダウンロード</span>
@@ -495,9 +495,9 @@ export default function ViewPage() {
             </div>
 
             {/* 投げ銭 */}
-            <div className="rounded-lg bg-white p-6">
-              <h3 className="mb-4 font-semibold">クリエイターを応援</h3>
-              <button className="w-full rounded-lg border border-gray-300 py-2 font-medium hover:bg-gray-50">
+            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
+              <h3 className="mb-4 font-semibold dark:text-white">クリエイターを応援</h3>
+              <button className="w-full rounded-lg border border-gray-300 dark:border-gray-600 py-2 font-medium hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
                 投げ銭する
               </button>
             </div>
@@ -507,7 +507,7 @@ export default function ViewPage() {
         {/* 関連作品 */}
         {relatedModels.length > 0 && (
           <div className="mt-12">
-            <h2 className="mb-6 text-2xl font-bold">同じ作者の他の作品</h2>
+            <h2 className="mb-6 text-2xl font-bold dark:text-white">同じ作者の他の作品</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {relatedModels.slice(0, 4).map((model) => (
                 <ModelCard key={model.id} model={model} showUser={false} />
