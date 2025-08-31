@@ -44,8 +44,6 @@ interface StoreState {
   clearHistory: () => void
   
   // UI状態
-  isSidebarOpen: boolean
-  toggleSidebar: () => void
   searchQuery: string
   setSearchQuery: (query: string) => void
   selectedTags: string[]
@@ -146,8 +144,6 @@ export const useStore = create<StoreState>()(
       clearHistory: () => set({ viewHistory: [] }),
       
       // UI状態
-      isSidebarOpen: true,
-      toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
       searchQuery: '',
       setSearchQuery: (query) => set({ searchQuery: query }),
       selectedTags: [],
@@ -203,7 +199,6 @@ export const useStore = create<StoreState>()(
       name: 'three-gallery-storage',
       partialize: (state) => ({
         currentUser: state.currentUser,
-        isSidebarOpen: state.isSidebarOpen,
         models: state.models, // モデルも永続化
         bookmarkedModels: state.bookmarkedModels, // ブックマークも永続化
         likedModels: state.likedModels, // いいねも永続化

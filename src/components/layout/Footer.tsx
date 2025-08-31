@@ -1,0 +1,50 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Home, TrendingUp, Users, Bookmark, Upload } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const menuItems = [
+  { icon: Home, label: 'ホーム', href: '/' },
+  { icon: TrendingUp, label: 'トレンド', href: '/trending' },
+  { icon: Upload, label: 'アップロード', href: '/upload' },
+  { icon: Users, label: 'フォロー', href: '/following' },
+  { icon: Bookmark, label: 'ブックマーク', href: '/bookmarks' },
+]
+
+export default function Footer() {
+  const pathname = usePathname()
+
+  return (
+    <footer className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-gray-700 bg-gray-800">
+      <nav className="flex items-center justify-center px-2 py-2">
+        <div className="flex items-center justify-around w-full max-w-md">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+          
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0',
+                isActive
+                  ? 'text-blue-400'
+                  : 'text-gray-400 hover:text-gray-200'
+              )}
+            >
+              <Icon className={cn(
+                "h-5 w-5",
+                isActive && "fill-current"
+              )} />
+              <span className="text-xs">{item.label}</span>
+            </Link>
+          )
+        })}
+        </div>
+      </nav>
+    </footer>
+  )
+}

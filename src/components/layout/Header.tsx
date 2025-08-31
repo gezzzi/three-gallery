@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
-import { Menu, Search, Upload, Bell, User, LogOut, Settings } from 'lucide-react'
+import { Upload, Bell, User, LogOut, Settings } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,12 +13,10 @@ const NotificationDropdown = dynamic(() => import('@/components/ui/NotificationD
 
 export default function Header() {
   const router = useRouter()
-  const { toggleSidebar, searchQuery, setSearchQuery, unreadNotificationCount, setNotifications } = useStore()
+  const { unreadNotificationCount, setNotifications } = useStore()
   const { user, signOut, loading } = useAuth()
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
@@ -63,56 +61,15 @@ export default function Header() {
     return () => clearInterval(interval)
   }, [user, setNotifications])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
-    }
-  }
-
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center gap-2 sm:gap-4 border border-gray-700 bg-gray-800 px-2 sm:px-4 shadow-sm">
-      {/* ロゴとメニュー */}
+      {/* ロゴ */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <button
-          onClick={toggleSidebar}
-          className="rounded-lg p-1.5 sm:p-2 hover:bg-gray-700"
-          aria-label="メニュー"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
         <Link href="/" className="flex items-center gap-2">
           <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
           <span className="hidden sm:inline text-xl font-bold">ThreeGallery</span>
         </Link>
       </div>
-
-      {/* デスクトップ検索バー */}
-      <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
-        <div className={`relative flex items-center rounded-full border ${
-          isSearchFocused ? 'border-blue-400' : 'border-gray-600'
-        } bg-gray-900 px-4 py-2 transition-colors w-full`}>
-          <Search className="h-5 w-5 text-gray-500" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-            placeholder="作品を検索..."
-            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-500 text-gray-100"
-          />
-        </div>
-      </form>
-
-      {/* モバイル検索ボタン */}
-      <button
-        onClick={() => setShowMobileSearch(!showMobileSearch)}
-        className="md:hidden rounded-lg p-2 hover:bg-gray-700"
-        aria-label="検索"
-      >
-        <Search className="h-5 w-5" />
-      </button>
 
       {/* 右側のアクション */}
       <div className="flex items-center gap-1 sm:gap-2 ml-auto">
@@ -210,28 +167,6 @@ export default function Header() {
           )
         )}
       </div>
-      
-      {/* モバイル検索バー */}
-      {showMobileSearch && (
-        <div className="absolute top-16 left-0 right-0 bg-gray-800 border-b border-gray-700 p-2 md:hidden z-40">
-          <form onSubmit={(e) => {
-            handleSearch(e)
-            setShowMobileSearch(false)
-          }}>
-            <div className="relative flex items-center rounded-full border border-gray-600 bg-gray-900 px-4 py-2">
-              <Search className="h-5 w-5 text-gray-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="作品を検索..."
-                className="ml-2 flex-1 bg-transparent outline-none placeholder:text-gray-500 text-gray-100"
-                autoFocus
-              />
-            </div>
-          </form>
-        </div>
-      )}
       
       {/* 認証モーダル */}
       {showAuthModal && (
