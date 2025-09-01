@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Play, Pause, Volume2, VolumeX, Music } from 'lucide-react'
+import { Pause, Volume2, VolumeX, Music } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface MusicPlayerProps {
@@ -27,6 +27,7 @@ export default function MusicPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isHovered, setIsHovered] = useState(false)
   const prevVolumeRef = useRef(0.5)
 
   // 音楽URLが変更されたら停止して新しい音楽を読み込む
@@ -173,10 +174,14 @@ export default function MusicPlayer({
   }
 
   return (
-    <div className={cn(
-      "flex items-center gap-3 rounded-lg bg-white/90 backdrop-blur-sm border p-3 shadow-sm",
-      className
-    )}>
+    <div 
+      className={cn(
+        "relative inline-block",
+        className
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* オーディオ要素 */}
       <audio
         ref={audioRef}
@@ -201,50 +206,41 @@ export default function MusicPlayer({
         onClick={handlePlayPause}
         disabled={isLoading || !!error}
         className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full transition-all",
+          "flex items-center justify-center w-12 h-12 rounded-full transition-all shadow-lg",
           isLoading || error
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? "bg-black/50 text-gray-400 cursor-not-allowed"
             : isPlaying
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            ? "bg-black/70 text-white hover:bg-black/80"
+            : "bg-black/50 text-white hover:bg-black/70"
         )}
         aria-label={isPlaying ? '一時停止' : '再生'}
+        title={musicName}
       >
         {isLoading ? (
-          <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
         ) : error ? (
-          <Music className="w-5 h-5" />
+          <Music className="w-6 h-6" />
         ) : isPlaying ? (
-          <Pause className="w-5 h-5" />
+          <Pause className="w-6 h-6" />
         ) : (
-          <Play className="w-5 h-5 ml-0.5" />
+          <Music className="w-6 h-6" />
         )}
       </button>
 
-      {/* 曲名 */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">
-          {musicName}
-        </p>
-        {error && (
-          <p className="text-xs text-red-500 truncate">{error}</p>
-        )}
-        {isPlaying && !error && (
-          <p className="text-xs text-gray-500">再生中...</p>
-        )}
-      </div>
-
-      {/* ボリュームコントロール */}
-      <div className="flex items-center gap-2">
+      {/* ホバー時に表示される音量コントロール */}
+      <div className={cn(
+        "absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/80 backdrop-blur-sm transition-all duration-300",
+        isHovered ? "opacity-100 visible translate-y-0" : "opacity-0 invisible translate-y-2"
+      )}>
         <button
           onClick={toggleMute}
-          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
+          className="p-1 rounded hover:bg-white/20 transition-colors"
           aria-label={isMuted ? 'ミュート解除' : 'ミュート'}
         >
           {isMuted || volume === 0 ? (
-            <VolumeX className="w-4 h-4 text-gray-600" />
+            <VolumeX className="w-4 h-4 text-white" />
           ) : (
-            <Volume2 className="w-4 h-4 text-gray-600" />
+            <Volume2 className="w-4 h-4 text-white" />
           )}
         </button>
         <input
@@ -254,33 +250,36 @@ export default function MusicPlayer({
           step="0.01"
           value={isMuted ? 0 : volume}
           onChange={handleVolumeChange}
-          className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          className="w-24 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider-dark"
           aria-label="音量"
         />
+        <span className="text-xs text-white/80 min-w-[30px] text-right">
+          {Math.round((isMuted ? 0 : volume) * 100)}%
+        </span>
       </div>
 
       <style jsx>{`
-        .slider::-webkit-slider-thumb {
+        .slider-dark::-webkit-slider-thumb {
           appearance: none;
           width: 12px;
           height: 12px;
-          background: #3b82f6;
+          background: #ffffff;
           border-radius: 50%;
           cursor: pointer;
         }
-        .slider::-moz-range-thumb {
+        .slider-dark::-moz-range-thumb {
           width: 12px;
           height: 12px;
-          background: #3b82f6;
+          background: #ffffff;
           border-radius: 50%;
           cursor: pointer;
           border: none;
         }
-        .slider::-webkit-slider-thumb:hover {
-          background: #2563eb;
+        .slider-dark::-webkit-slider-thumb:hover {
+          background: #e5e5e5;
         }
-        .slider::-moz-range-thumb:hover {
-          background: #2563eb;
+        .slider-dark::-moz-range-thumb:hover {
+          background: #e5e5e5;
         }
       `}</style>
     </div>

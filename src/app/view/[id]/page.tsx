@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark } from 'lucide-react'
+import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark, Maximize } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
@@ -45,6 +45,8 @@ export default function ViewPage() {
   const [musicUrl, setMusicUrl] = useState<string | undefined>()
   const [musicName, setMusicName] = useState<string>('無題の曲')
   const [showShareModal, setShowShareModal] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const viewerContainerRef = useRef<HTMLDivElement>(null)
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const storedModels = useStore((state) => state.models)
   const addToHistory = useStore((state) => state.addToHistory)
@@ -215,22 +217,26 @@ export default function ViewPage() {
     console.log('[ViewPage] 音楽URLが更新されました:', { musicUrl, musicName })
   }, [musicUrl, musicName])
 
-  if (!model) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-gray-600 dark:text-gray-400">モデルが見つかりません</p>
-        </div>
-      </div>
-    )
-  }
+  // 全画面表示の状態変化を監視
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
 
   const handleDownload = () => {
+    if (!model) return
     // ダウンロード処理
     window.open(model.fileUrl, '_blank')
   }
 
   const handleShare = async () => {
+    if (!model) return
     const shareUrl = window.location.href
     const shareTitle = model.title
     const shareText = model.description || `${model.title} - Three Gallery`
@@ -256,14 +262,54 @@ export default function ViewPage() {
     setShowShareModal(true)
   }
 
+  const toggleFullscreen = async () => {
+    if (!viewerContainerRef.current) return
+
+    try {
+      if (!document.fullscreenElement) {
+        // 全画面表示にする
+        await viewerContainerRef.current.requestFullscreen()
+        setIsFullscreen(true)
+      } else {
+        // 全画面表示を解除
+        await document.exitFullscreen()
+        setIsFullscreen(false)
+      }
+    } catch (error) {
+      console.error('全画面表示の切り替えに失敗しました:', error)
+    }
+  }
+
+  if (!model) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600 dark:text-gray-400">モデルが見つかりません</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* HTMLビューア */}
-      <div className="h-[60vh] bg-gray-900 relative">
+      <div 
+        ref={viewerContainerRef}
+        className={`bg-gray-900 relative ${isFullscreen ? 'h-screen' : 'h-[80vh]'}`}
+      >
         <HtmlPreview
           htmlContent={(model.metadata?.htmlContent as string) || ''}
           height="100%"
         />
+        
+        {/* 全画面表示ボタン */}
+        <button
+          onClick={toggleFullscreen}
+          className="absolute bottom-4 left-4 z-20 flex items-center justify-center w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
+          title={isFullscreen ? '全画面表示を終了' : '全画面表示'}
+        >
+          <Maximize className="h-5 w-5" />
+        </button>
         
         {/* 音楽プレイヤー */}
         {musicUrl && (

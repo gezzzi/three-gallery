@@ -60,12 +60,16 @@ npm run build && npm run start  # Test production build locally
   - Routes check `user` from `useAuth()` hook
 
 ### State Management
-- **Zustand store** (`src/store/useStore.ts`): Global state for models, UI state (sidebar, search), filters, history, likes, bookmarks
-- **Persisted state**: `currentUser`, `isSidebarOpen`, `models`, `history`, `likedModels`, `bookmarkedModels` saved to localStorage
+- **Zustand store** (`src/store/useStore.ts`): Global state for models, UI state, filters, history, likes, bookmarks
+  - Note: `isSidebarOpen` and `toggleSidebar` have been removed - sidebar is now hover-controlled
+- **Persisted state**: `currentUser`, `models`, `history`, `likedModels`, `bookmarkedModels` saved to localStorage
 - **AuthContext vs Store**: Auth state in context, UI/data state in Zustand
 
 ### Component Architecture
-- **Layout Structure**: AuthProvider > LayoutClient > Header + Sidebar + Content
+- **Layout Structure**: AuthProvider > LayoutClient > Header + Sidebar + PageFooter + Footer (mobile)
+  - **Sidebar**: Icon-only by default, expands on hover (desktop only)
+  - **Footer**: Mobile navigation with Home, Trending, Upload, Following, Bookmarks
+  - **PageFooter**: Site information footer with links to About, Terms, Privacy
 - **Dynamic Imports**: Heavy components (CodeEditor, HtmlPreview) loaded with `dynamic()` for performance
 - **Client Components**: All interactive components use `'use client'` directive
 - **Suspense Boundaries**: Required for useSearchParams and async components
@@ -175,3 +179,9 @@ Tables in `supabase/schema.sql` and migrations:
 - **Updated UI Text**: Changed from "3Dモデル" to "Three.js作品" throughout
 - **Removed Components**: ModelViewer, ModelViewerWithPerformance deleted
 - **Type Updates**: Removed model-specific properties from Model interface
+- **UI Navigation Updates**:
+  - Removed search bar from Header
+  - Removed menu toggle button - sidebar is now hover-based
+  - Added mobile Footer navigation bar
+  - Added PageFooter with site information
+  - Sidebar shows icons only, expands on hover (desktop only)
