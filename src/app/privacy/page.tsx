@@ -3,26 +3,26 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* 戻るリンク */}
         <Link 
           href="/" 
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
           ホームに戻る
         </Link>
 
         {/* メインコンテンツ */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-3xl font-bold mb-2">プライバシーポリシー</h1>
-          <p className="text-sm text-gray-600 mb-8">最終更新日: 2025年1月20日</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+          <h1 className="text-3xl font-bold mb-2 dark:text-white">プライバシーポリシー</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">最終更新日: 2025年1月20日</p>
           
-          <div className="space-y-8 text-gray-700">
+          <div className="space-y-8 text-gray-700 dark:text-gray-300">
             {/* はじめに */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">1. はじめに</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">1. はじめに</h2>
               <p className="leading-relaxed">
                 ThreeGallery（以下、「本サービス」）は、ユーザーのプライバシーを重視し、
                 個人情報の保護に努めています。このプライバシーポリシーは、
@@ -32,11 +32,11 @@ export default function PrivacyPage() {
 
             {/* 収集する情報 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">2. 収集する情報</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">2. 収集する情報</h2>
               
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium mb-2">2.1 アカウント情報</h3>
+                  <h3 className="font-medium mb-2 dark:text-gray-200">2.1 アカウント情報</h3>
                   <div className="space-y-1 pl-4">
                     <p>• メールアドレス</p>
                     <p>• ユーザー名</p>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                 </div>
 
                 <div>
-                  <h3 className="font-medium mb-2">2.2 コンテンツ情報</h3>
+                  <h3 className="font-medium mb-2 dark:text-gray-200">2.2 コンテンツ情報</h3>
                   <div className="space-y-1 pl-4">
                     <p>• アップロードした3Dモデル、コード</p>
                     <p>• 作品のタイトル、説明、タグ</p>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
                 </div>
 
                 <div>
-                  <h3 className="font-medium mb-2">2.3 利用情報</h3>
+                  <h3 className="font-medium mb-2 dark:text-gray-200">2.3 利用情報</h3>
                   <div className="space-y-1 pl-4">
                     <p>• アクセスログ</p>
                     <p>• IPアドレス</p>
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
 
             {/* 情報の利用目的 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">3. 情報の利用目的</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">3. 情報の利用目的</h2>
               <p className="leading-relaxed mb-3">
                 収集した情報は、以下の目的で利用します：
               </p>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
 
             {/* 情報の共有 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">4. 情報の共有</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">4. 情報の共有</h2>
               <div className="space-y-3">
                 <p className="leading-relaxed">
                   以下の場合を除き、ユーザーの個人情報を第三者と共有することはありません：
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
 
             {/* データの保管 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">5. データの保管</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">5. データの保管</h2>
               <div className="space-y-2">
                 <p className="leading-relaxed">
                   ユーザーデータは、Supabase（クラウドサービス）に保管されます。
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
 
             {/* Cookie */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">6. Cookie（クッキー）</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">6. Cookie（クッキー）</h2>
               <div className="space-y-2">
                 <p className="leading-relaxed">
                   本サービスでは、以下の目的でCookieを使用します：
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
 
             {/* 外部サービス */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">7. 外部サービス</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">7. 外部サービス</h2>
               <div className="space-y-3">
                 <p className="leading-relaxed">
                   本サービスでは、以下の外部サービスを利用しています：
@@ -151,11 +151,11 @@ export default function PrivacyPage() {
                 <div className="space-y-2 pl-4">
                   <div>
                     <p className="font-medium">Google OAuth</p>
-                    <p className="text-sm">認証サービス（Googleアカウントでのログイン）</p>
+                    <p className="text-sm dark:text-gray-400">認証サービス（Googleアカウントでのログイン）</p>
                   </div>
                   <div>
                     <p className="font-medium">Supabase</p>
-                    <p className="text-sm">データベース・認証・ストレージサービス</p>
+                    <p className="text-sm dark:text-gray-400">データベース・認証・ストレージサービス</p>
                   </div>
                 </div>
                 <p className="leading-relaxed mt-3">
@@ -166,7 +166,7 @@ export default function PrivacyPage() {
 
             {/* 子供のプライバシー */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">8. 子供のプライバシー</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">8. 子供のプライバシー</h2>
               <p className="leading-relaxed">
                 本サービスは13歳未満の方の利用を想定していません。
                 13歳未満の方は、保護者の同意なく個人情報を提供しないでください。
@@ -175,7 +175,7 @@ export default function PrivacyPage() {
 
             {/* ユーザーの権利 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">9. ユーザーの権利</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">9. ユーザーの権利</h2>
               <p className="leading-relaxed mb-3">
                 ユーザーは以下の権利を有します：
               </p>
@@ -192,7 +192,7 @@ export default function PrivacyPage() {
 
             {/* 国際的な利用 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">10. 国際的な利用</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">10. 国際的な利用</h2>
               <p className="leading-relaxed">
                 本サービスはグローバルに提供されています。
                 異なる国や地域からアクセスする場合、その地域の法令に従う責任はユーザーにあります。
@@ -201,7 +201,7 @@ export default function PrivacyPage() {
 
             {/* ポリシーの変更 */}
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">11. ポリシーの変更</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">11. ポリシーの変更</h2>
               <p className="leading-relaxed">
                 このプライバシーポリシーは、必要に応じて変更することがあります。
                 重要な変更がある場合は、サービス内でお知らせします。
@@ -210,21 +210,21 @@ export default function PrivacyPage() {
 
             {/* お問い合わせ */}
             <section className="space-y-3 border-t pt-8">
-              <h2 className="text-xl font-semibold text-gray-900">お問い合わせ</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">お問い合わせ</h2>
               <p className="leading-relaxed">
                 プライバシーに関するお問い合わせは、
                 <a 
                   href="https://x.com/sakumonbot"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 underline mx-1"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline mx-1"
                 >
                   X（旧Twitter）
                 </a>
                 からお願いいたします。
               </p>
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm">
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-sm dark:text-gray-300">
                   運営者: sakumonbot<br />
                   サービス名: ThreeGallery
                 </p>

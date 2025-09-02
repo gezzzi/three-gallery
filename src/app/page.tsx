@@ -20,11 +20,16 @@ const timeRanges = [
   { id: 'all', label: '全期間' },
 ]
 
+const ITEMS_PER_PAGE = 12 // 1ページあたりの表示件数
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('trending')
   const [timeRange, setTimeRange] = useState('24h')
-  const [displayModels, setDisplayModels] = useState<Model[]>([])
+  const [allModels, setAllModels] = useState<Model[]>([]) // 全てのモデル
+  const [displayModels, setDisplayModels] = useState<Model[]>([]) // 表示中のモデル
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE) // 現在の表示件数
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false) // もっと見る読み込み中
 
   // モデルの取得とソート処理
   useEffect(() => {
@@ -110,12 +115,39 @@ export default function HomePage() {
           break
       }
       
-      setDisplayModels(sortedModels)
+      // 全モデルを保存し、初期表示分だけ表示
+      setAllModels(sortedModels)
+      setDisplayModels(sortedModels.slice(0, displayCount))
       setIsLoading(false)
     }
     
     fetchModels()
-  }, [activeTab, timeRange])
+  }, [activeTab, timeRange, displayCount])
+
+  // もっと見るボタンのクリックハンドラ
+  const handleLoadMore = () => {
+    setIsLoadingMore(true)
+    
+    // 少し遅延を入れてローディング状態を見せる
+    setTimeout(() => {
+      const newDisplayCount = displayCount + ITEMS_PER_PAGE
+      setDisplayCount(newDisplayCount)
+      setDisplayModels(allModels.slice(0, newDisplayCount))
+      setIsLoadingMore(false)
+    }, 300)
+  }
+
+  // タブ切り替え時に表示件数をリセット
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId)
+    setDisplayCount(ITEMS_PER_PAGE)
+  }
+
+  // 期間切り替え時に表示件数をリセット
+  const handleTimeRangeChange = (rangeId: string) => {
+    setTimeRange(rangeId)
+    setDisplayCount(ITEMS_PER_PAGE)
+  }
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">
@@ -138,7 +170,7 @@ export default function HomePage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex items-center gap-1 sm:gap-2 rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-blue-600 text-white'
@@ -158,7 +190,7 @@ export default function HomePage() {
               {timeRanges.map((range) => (
                 <button
                   key={range.id}
-                  onClick={() => setTimeRange(range.id)}
+                  onClick={() => handleTimeRangeChange(range.id)}
                   className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium transition-colors ${
                     timeRange === range.id
                       ? 'bg-blue-600 text-white'
@@ -197,18 +229,40 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {displayModels.map((model) => (
-              <ModelCard key={model.id} model={model} />
-            ))}
-          </div>
+          {displayModels.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400">作品が見つかりませんでした</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {displayModels.map((model) => (
+                <ModelCard key={model.id} model={model} />
+              ))}
+            </div>
+          )}
           
           {/* もっと見る */}
-          <div className="mt-8 text-center">
-            <button className="rounded-lg border border-gray-600 bg-gray-800 px-6 py-2 font-medium text-gray-300 hover:bg-gray-700 transition-colors">
-              もっと見る
-            </button>
-          </div>
+          {displayModels.length < allModels.length && (
+            <div className="mt-8 text-center">
+              <button 
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="rounded-lg border border-gray-600 bg-gray-800 px-6 py-2 font-medium text-gray-300 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingMore ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    読み込み中...
+                  </span>
+                ) : (
+                  `もっと見る (${displayModels.length}/${allModels.length})`
+                )}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Eye, Calendar, Tag, Bookmark, Maximize } from 'lucide-react'
+import { Heart, Download, Share2, Eye, Calendar, Tag, Maximize } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
 import { useStore } from '@/store/useStore'
-import { useBookmark } from '@/hooks/useBookmark'
 import { useLike } from '@/hooks/useLike'
+import { useViewCount } from '@/hooks/useViewCount'
 import { getDefaultBGM } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
@@ -50,8 +50,8 @@ export default function ViewPage() {
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
   const storedModels = useStore((state) => state.models)
   const addToHistory = useStore((state) => state.addToHistory)
-  const { isBookmarked, toggleBookmark } = useBookmark(params.id as string)
   const { isLiked, toggleLike, likeCount } = useLike(params.id as string)
+  const { viewCount } = useViewCount(model?.id, model?.viewCount || 0)
 
   useEffect(() => {
     const fetchModel = async () => {
@@ -338,7 +338,7 @@ export default function ViewPage() {
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Eye className="h-4 w-4" />
-                  <span>{formatNumber(model.viewCount)} 回視聴</span>
+                  <span>{formatNumber(viewCount || model.viewCount)} 回視聴</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Calendar className="h-4 w-4" />
@@ -357,18 +357,6 @@ export default function ViewPage() {
                 >
                   <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
                   <span>{formatNumber(likeCount || model.likeCount)}</span>
-                </button>
-                
-                <button
-                  onClick={toggleBookmark}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                    isBookmarked
-                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
-                  <span>ブックマーク</span>
                 </button>
                 
                 <button 

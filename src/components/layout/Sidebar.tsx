@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Home, TrendingUp, Users, Bookmark, Heart, Settings, Clock } from 'lucide-react'
+import { Home, TrendingUp, Users, Heart, Settings, Clock, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const menuItems = [
   { icon: Home, label: 'ホーム', href: '/' },
   { icon: TrendingUp, label: 'トレンド', href: '/trending' },
+  { icon: Upload, label: 'アップロード', href: '/upload' },
   { icon: Users, label: 'フォロー中', href: '/following' },
-  { icon: Bookmark, label: 'ブックマーク', href: '/bookmarks' },
   { icon: Heart, label: 'いいね', href: '/likes' },
   { icon: Clock, label: '履歴', href: '/history' },
   { icon: Settings, label: '設定', href: '/settings' },

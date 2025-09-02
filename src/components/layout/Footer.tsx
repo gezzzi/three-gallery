@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, TrendingUp, Users, Bookmark, Upload } from 'lucide-react'
+import { Home, TrendingUp, Users, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const menuItems = [
@@ -10,7 +10,6 @@ const menuItems = [
   { icon: TrendingUp, label: 'トレンド', href: '/trending' },
   { icon: Upload, label: 'アップロード', href: '/upload' },
   { icon: Users, label: 'フォロー', href: '/following' },
-  { icon: Bookmark, label: 'ブックマーク', href: '/bookmarks' },
 ]
 
 export default function Footer() {

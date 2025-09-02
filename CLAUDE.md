@@ -26,6 +26,10 @@ npm run build        # Build for production (must pass before deployment)
 npm run start        # Start production server
 npm run lint         # Run ESLint checks
 
+# Build troubleshooting
+rm -rf .next         # Clean build cache if encountering build errors
+npm run build        # Rebuild after cleaning
+
 # Supabase Local Development
 npx supabase start   # Start local Supabase (PostgreSQL, Auth, Storage)
 npx supabase stop    # Stop local Supabase
@@ -60,15 +64,15 @@ npm run build && npm run start  # Test production build locally
   - Routes check `user` from `useAuth()` hook
 
 ### State Management
-- **Zustand store** (`src/store/useStore.ts`): Global state for models, UI state, filters, history, likes, bookmarks
+- **Zustand store** (`src/store/useStore.ts`): Global state for models, UI state, filters, history, likes
   - Note: `isSidebarOpen` and `toggleSidebar` have been removed - sidebar is now hover-controlled
-- **Persisted state**: `currentUser`, `models`, `history`, `likedModels`, `bookmarkedModels` saved to localStorage
+- **Persisted state**: `currentUser`, `models`, `history`, `likedModels` saved to localStorage
 - **AuthContext vs Store**: Auth state in context, UI/data state in Zustand
 
 ### Component Architecture
 - **Layout Structure**: AuthProvider > LayoutClient > Header + Sidebar + PageFooter + Footer (mobile)
   - **Sidebar**: Icon-only by default, expands on hover (desktop only)
-  - **Footer**: Mobile navigation with Home, Trending, Upload, Following, Bookmarks
+  - **Footer**: Mobile navigation with Home, Trending, Upload, Following
   - **PageFooter**: Site information footer with links to About, Terms, Privacy
 - **Dynamic Imports**: Heavy components (CodeEditor, HtmlPreview) loaded with `dynamic()` for performance
 - **Client Components**: All interactive components use `'use client'` directive
@@ -82,9 +86,11 @@ npm run build && npm run start  # Test production build locally
 
 ### BGM System
 - **Default BGMs** (`src/lib/defaultBgm.ts`): Predefined BGM tracks with genres and descriptions
-- **MusicPlayer** (`src/components/ui/MusicPlayer.tsx`): Audio playback controls with volume adjustment
+- **MusicPlayer** (`src/components/ui/MusicPlayer.tsx`): Compact icon-only player with hover volume control
+  - Shows music note icon when stopped, pause icon when playing
+  - Volume control appears on hover with mute button and percentage display
 - **Upload Support**: Users can select default BGMs or upload custom audio files (MP3, WAV, OGG, M4A)
-- **Storage**: BGM metadata stored in model's metadata field (music_type, music_url, music_name)
+- **Storage**: BGM metadata stored in model's metadata field (music_type, music_url, music_name) and dedicated columns (bgm_type, bgm_url, bgm_name)
 
 ## Critical Implementation Details
 
@@ -118,6 +124,7 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 4. **Hydration Mismatch**: Dark Reader extension - fixed with `suppressHydrationWarning` on html/body
 5. **OAuth Redirect Loop**: Ensure redirect URLs match in Supabase dashboard and use dynamic origin
 6. **Build Route Manifest Error**: Clean `.next` folder and restart dev server if routes-manifest.json errors occur
+7. **React Hooks Error**: Ensure all hooks are called before conditional returns to avoid "Rendered more hooks than during the previous render" error
 
 ### File Upload Handling
 - **Code**: Stored as string in metadata.code, requires `file_url: 'threejs-code'`
@@ -139,7 +146,7 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 Tables in `supabase/schema.sql` and migrations:
 - `profiles`: Extended user data with username, bio, avatar
 - `models`: Content metadata with tags, licensing, stats, BGM fields, `upload_type` field ('html' or 'code' only)
-- `comments`, `likes`, `follows`, `bookmarks`: Social features
+- `comments`, `likes`, `follows`: Social features
 - `tags`, `downloads`: Content management
 - Row Level Security (RLS) policies configured but temporarily disabled on `models` table
 
@@ -185,3 +192,7 @@ Tables in `supabase/schema.sql` and migrations:
   - Added mobile Footer navigation bar
   - Added PageFooter with site information
   - Sidebar shows icons only, expands on hover (desktop only)
+- **Viewer Enhancements**:
+  - HTMLビューア: 80vh height (80% of viewport)
+  - Fullscreen toggle button (bottom-left corner)
+  - Compact music player (icon-only, hover for volume control)

@@ -75,7 +75,7 @@ export interface Transaction {
 export interface Notification {
   id: string
   userId: string
-  type: 'new_follower' | 'like' | 'bookmark' | 'download' | 'new_upload' | 'view_milestone' | 'system'
+  type: 'new_follower' | 'like' | 'download' | 'new_upload' | 'view_milestone' | 'system'
   title: string
   message: string
   data: {

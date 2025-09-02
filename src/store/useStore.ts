@@ -14,12 +14,6 @@ interface StoreState {
   updateModel: (id: string, updates: Partial<Model>) => void
   deleteModel: (id: string) => void
   
-  // ブックマーク
-  bookmarkedModels: string[]
-  addBookmark: (modelId: string) => void
-  removeBookmark: (modelId: string) => void
-  clearBookmarks: () => void
-  
   // いいね
   likedModels: string[]
   addLike: (modelId: string) => void
@@ -88,16 +82,6 @@ export const useStore = create<StoreState>()(
       deleteModel: (id) => set((state) => ({
         models: state.models.filter((m) => m.id !== id)
       })),
-      
-      // ブックマーク
-      bookmarkedModels: [],
-      addBookmark: (modelId) => set((state) => ({
-        bookmarkedModels: [...state.bookmarkedModels, modelId]
-      })),
-      removeBookmark: (modelId) => set((state) => ({
-        bookmarkedModels: state.bookmarkedModels.filter((id) => id !== modelId)
-      })),
-      clearBookmarks: () => set({ bookmarkedModels: [] }),
       
       // いいね
       likedModels: [],
@@ -200,7 +184,6 @@ export const useStore = create<StoreState>()(
       partialize: (state) => ({
         currentUser: state.currentUser,
         models: state.models, // モデルも永続化
-        bookmarkedModels: state.bookmarkedModels, // ブックマークも永続化
         likedModels: state.likedModels, // いいねも永続化
         followingUsers: state.followingUsers, // フォローも永続化
         purchasedModels: state.purchasedModels, // 購入済みも永続化

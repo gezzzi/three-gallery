@@ -480,18 +480,7 @@ export default function UploadPage() {
               </label>
             </div>
             
-            {thumbnailOption === 'auto' ? (
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-400 dark:text-gray-400">
-                  アップロード時に3Dシーンから自動的に高品質なサムネイルを生成します。
-                </p>
-                <div className="mt-2 text-xs text-gray-500">
-                  • 解像度: 1200x630px
-                  • 最適な角度で自動撮影
-                  • 高品質レンダリング
-                </div>
-              </div>
-            ) : (
+            {thumbnailOption === 'custom' && (
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">
                   サムネイル画像 (JPEG, PNG, WebP)
@@ -642,37 +631,37 @@ export default function UploadPage() {
               
               {/* 選択中のBGM表示とドロップダウントグル */}
               <div 
-                className="flex items-center justify-between rounded-lg border border-gray-300 bg-gray-50 p-3 cursor-pointer hover:bg-gray-100"
+                className="flex items-center justify-between rounded-lg border border-gray-600 bg-gray-700 p-3 cursor-pointer hover:bg-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                 onClick={() => setIsBgmListOpen(!isBgmListOpen)}
               >
                 <div className="flex items-center gap-3">
-                  <Music className="h-4 w-4 text-gray-600" />
+                  <Music className="h-4 w-4 text-gray-300 dark:text-gray-300" />
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium text-gray-200 dark:text-gray-200">
                       {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.name || 'BGMを選択'}
                     </div>
-                    <div className="text-sm text-gray-400 dark:text-gray-400">
+                    <div className="text-sm text-gray-400 dark:text-gray-500">
                       {defaultBGMs.find(bgm => bgm.id === selectedBgmId)?.genre}
                     </div>
                   </div>
                 </div>
                 {isBgmListOpen ? (
-                  <ChevronUp className="h-5 w-5 text-gray-400" />
+                  <ChevronUp className="h-5 w-5 text-gray-400 dark:text-gray-400" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-400" />
                 )}
               </div>
 
               {/* BGMリスト（折りたたみ可能） */}
               {isBgmListOpen && (
-                <div className="space-y-1 rounded-lg border border-gray-200 bg-white p-2 max-h-64 overflow-y-auto">
+                <div className="space-y-1 rounded-lg border border-gray-600 bg-gray-800 p-2 max-h-64 overflow-y-auto dark:border-gray-600 dark:bg-gray-800">
                   {defaultBGMs.map((bgm) => (
                     <div
                       key={bgm.id}
                       className={`flex items-center justify-between rounded-md p-2 transition-colors cursor-pointer ${
                         selectedBgmId === bgm.id
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-blue-900/30 text-blue-400 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'hover:bg-gray-700 dark:hover:bg-gray-700'
                       }`}
                       onClick={() => {
                         setSelectedBgmId(bgm.id)
@@ -681,10 +670,10 @@ export default function UploadPage() {
                       }}
                     >
                       <div className="flex-1">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-gray-200 dark:text-gray-200">
                           {bgm.name}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
                           {bgm.genre}
                           {bgm.description && ` - ${bgm.description}`}
                         </div>
@@ -700,7 +689,7 @@ export default function UploadPage() {
                             handleBgmPreview(bgm.id)
                           }
                         }}
-                        className="ml-2 rounded-full p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        className="ml-2 rounded-full p-1.5 text-gray-400 hover:bg-gray-600 hover:text-gray-200 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-200"
                         title="試聴"
                       >
                         {previewAudio && selectedBgmId === bgm.id ? (

@@ -2,9 +2,8 @@
 
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
-import { Upload, Bell, User, LogOut, Settings } from 'lucide-react'
+import { Bell, User, LogOut, Settings } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import dynamic from 'next/dynamic'
 
@@ -12,7 +11,6 @@ const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: fals
 const NotificationDropdown = dynamic(() => import('@/components/ui/NotificationDropdown'), { ssr: false })
 
 export default function Header() {
-  const router = useRouter()
   const { unreadNotificationCount, setNotifications } = useStore()
   const { user, signOut, loading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -73,14 +71,6 @@ export default function Header() {
 
       {/* 右側のアクション */}
       <div className="flex items-center gap-1 sm:gap-2 ml-auto">
-        <Link
-          href="/upload"
-          className="flex items-center gap-1 sm:gap-2 rounded-lg bg-blue-600 px-2 sm:px-4 py-1.5 sm:py-2 font-medium text-white hover:bg-blue-700 transition-colors text-sm sm:text-base"
-        >
-          <Upload className="h-4 w-4" />
-          <span className="hidden sm:inline">アップロード</span>
-        </Link>
-
         {user && (
           <div className="relative" ref={notificationRef}>
             <button

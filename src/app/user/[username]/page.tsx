@@ -12,13 +12,11 @@ import {
   Twitter,
   Grid,
   Heart,
-  Bookmark,
 } from 'lucide-react'
 
 const tabs = [
   { id: 'models', label: '作品', icon: Grid },
   { id: 'likes', label: 'いいね', icon: Heart },
-  { id: 'bookmarks', label: 'ブックマーク', icon: Bookmark },
 ]
 
 export default function UserProfilePage() {

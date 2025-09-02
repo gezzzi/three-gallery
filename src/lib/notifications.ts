@@ -75,42 +75,6 @@ export async function createLikeNotification(
   }
 }
 
-// ブックマーク時の通知を作成
-export async function createBookmarkNotification(
-  modelOwnerId: string,
-  bookmarkerId: string,
-  bookmarkerName: string,
-  modelId: string,
-  modelTitle: string
-) {
-  // 自分の作品へのブックマークは通知しない
-  if (modelOwnerId === bookmarkerId) return true
-
-  try {
-    const response = await fetch('/api/notifications/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: modelOwnerId,
-        type: 'bookmark',
-        title: '作品がブックマークされました',
-        message: `${bookmarkerName}さんが「${modelTitle}」をブックマークしました`,
-        data: {
-          fromUserId: bookmarkerId,
-          fromUserName: bookmarkerName,
-          modelId,
-          modelTitle
-        }
-      })
-    })
-    
-    return response.ok
-  } catch (error) {
-    console.error('Error creating bookmark notification:', error)
-    return false
-  }
-}
-
 // ダウンロード時の通知を作成
 export async function createDownloadNotification(
   modelOwnerId: string,
