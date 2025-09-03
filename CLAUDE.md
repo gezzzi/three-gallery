@@ -71,7 +71,7 @@ npm run build && npm run start  # Test production build locally
 
 ### Component Architecture
 - **Layout Structure**: AuthProvider > LayoutClient > Header + Sidebar + PageFooter + Footer (mobile)
-  - **Sidebar**: Icon-only by default, expands on hover (desktop only)
+  - **Sidebar**: Icon-only by default, expands on hover (desktop only), includes upload button
   - **Footer**: Mobile navigation with Home, Trending, Upload, Following
   - **PageFooter**: Site information footer with links to About, Terms, Privacy
 - **Dynamic Imports**: Heavy components (CodeEditor, HtmlPreview) loaded with `dynamic()` for performance
@@ -91,6 +91,16 @@ npm run build && npm run start  # Test production build locally
   - Volume control appears on hover with mute button and percentage display
 - **Upload Support**: Users can select default BGMs or upload custom audio files (MP3, WAV, OGG, M4A)
 - **Storage**: BGM metadata stored in model's metadata field (music_type, music_url, music_name) and dedicated columns (bgm_type, bgm_url, bgm_name)
+
+### View Count System
+- **API Endpoint** (`/api/models/[id]/views`): Increments and retrieves view counts
+- **useViewCount Hook**: Manages view tracking with session storage to prevent duplicate counts
+- **Features**: 2-second delay before counting, session-based deduplication
+
+### Pagination System
+- **Home Page**: Load more functionality with 12 items per page
+- **State Management**: Separate `allModels` and `displayModels` arrays
+- **UI Feedback**: Loading spinner and count display (e.g., "もっと見る (12/50)")
 
 ## Critical Implementation Details
 
@@ -125,6 +135,7 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 5. **OAuth Redirect Loop**: Ensure redirect URLs match in Supabase dashboard and use dynamic origin
 6. **Build Route Manifest Error**: Clean `.next` folder and restart dev server if routes-manifest.json errors occur
 7. **React Hooks Error**: Ensure all hooks are called before conditional returns to avoid "Rendered more hooks than during the previous render" error
+8. **Next.js 15 Dynamic Routes**: Route params must use Promise type (e.g., `{ params: Promise<{ id: string }> }`)
 
 ### File Upload Handling
 - **Code**: Stored as string in metadata.code, requires `file_url: 'threejs-code'`
@@ -146,7 +157,7 @@ NEXT_PUBLIC_APP_URL               # Application URL for OAuth redirects
 Tables in `supabase/schema.sql` and migrations:
 - `profiles`: Extended user data with username, bio, avatar
 - `models`: Content metadata with tags, licensing, stats, BGM fields, `upload_type` field ('html' or 'code' only)
-- `comments`, `likes`, `follows`: Social features
+- `comments`, `likes`, `follows`: Social features (bookmarks table removed in migration 004)
 - `tags`, `downloads`: Content management
 - Row Level Security (RLS) policies configured but temporarily disabled on `models` table
 
@@ -155,6 +166,7 @@ Tables in `supabase/schema.sql` and migrations:
 - Fixed migration numbering conflicts (002 → 003)
 - Added `upload_type` field handling in upload API (supports 'html' and 'code' only)
 - Enhanced BGM system with direct column storage (bgm_type, bgm_url, bgm_name)
+- Removed bookmarks table and functionality (migration 004)
 
 ## Supabase Local Development
 
@@ -178,6 +190,7 @@ Tables in `supabase/schema.sql` and migrations:
 - **Suspense Boundaries**: Wrap async components and useSearchParams
 - **Client-Side Routing**: App Router with proper loading states
 - **State Persistence**: Selective localStorage usage for performance
+- **Pagination**: Home page loads 12 items initially, then 12 more per "load more" click
 
 ## Recent Major Changes
 
@@ -188,7 +201,7 @@ Tables in `supabase/schema.sql` and migrations:
 - **Type Updates**: Removed model-specific properties from Model interface
 - **UI Navigation Updates**:
   - Removed search bar from Header
-  - Removed menu toggle button - sidebar is now hover-based
+  - Upload button moved from Header to Sidebar (desktop) and Footer (mobile)
   - Added mobile Footer navigation bar
   - Added PageFooter with site information
   - Sidebar shows icons only, expands on hover (desktop only)
@@ -196,3 +209,8 @@ Tables in `supabase/schema.sql` and migrations:
   - HTMLビューア: 80vh height (80% of viewport)
   - Fullscreen toggle button (bottom-left corner)
   - Compact music player (icon-only, hover for volume control)
+- **Feature Removals**:
+  - Bookmark functionality completely removed (UI, store, database)
+- **Dark Mode Support**:
+  - About, Terms, and Privacy pages fully support dark mode
+  - Upload page BGM selector uses dark theme

@@ -510,89 +510,6 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 基本情報 */}
-        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
-          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
-            <Info className="h-4 w-4 sm:h-5 sm:w-5" />
-            基本情報
-          </h2>
-          
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
-              タイトル <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-              placeholder="例: 回転するキューブ"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
-              説明 <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-              rows={4}
-              placeholder="コードの説明や使い方を入力してください"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
-              <Tag className="inline h-4 w-4" /> タグ <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-              placeholder="Three.js, コード, チュートリアル（カンマ区切り）"
-              required
-            />
-          </div>
-        </div>
-
-        {/* ライセンス設定 */}
-        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
-          <h2 className="text-base sm:text-lg font-semibold">ライセンス設定</h2>
-          
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ライセンス</label>
-            <select
-              value={formData.license}
-              onChange={(e) => setFormData({ ...formData, license: e.target.value })}
-              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-            >
-              {licenses.map((license) => (
-                <option key={license.id} value={license.id}>
-                  {license.label} - {license.description}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="commercial"
-              checked={formData.isCommercialOk}
-              onChange={(e) => setFormData({ ...formData, isCommercialOk: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <label htmlFor="commercial" className="text-sm">
-              商用利用を許可する
-            </label>
-          </div>
-        </div>
-
         {/* BGM設定 */}
         <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
           <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
@@ -731,6 +648,89 @@ export default function UploadPage() {
               )}
             </div>
           )}
+        </div>
+
+        {/* 基本情報 */}
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5" />
+            基本情報
+          </h2>
+          
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
+              タイトル <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+              placeholder="例: 回転するキューブ"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
+              説明 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+              rows={4}
+              placeholder="コードの説明や使い方を入力してください"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">
+              <Tag className="inline h-4 w-4" /> タグ <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+              placeholder="Three.js, コード, チュートリアル（カンマ区切り）"
+              required
+            />
+          </div>
+        </div>
+
+        {/* ライセンス設定 */}
+        <div className="space-y-4 rounded-lg bg-gray-800 p-3 sm:p-6 dark:bg-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold">ライセンス設定</h2>
+          
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ライセンス</label>
+            <select
+              value={formData.license}
+              onChange={(e) => setFormData({ ...formData, license: e.target.value })}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-3 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+            >
+              {licenses.map((license) => (
+                <option key={license.id} value={license.id}>
+                  {license.label} - {license.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="commercial"
+              checked={formData.isCommercialOk}
+              onChange={(e) => setFormData({ ...formData, isCommercialOk: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <label htmlFor="commercial" className="text-sm">
+              商用利用を許可する
+            </label>
+          </div>
         </div>
 
         {/* 公開設定 */}

@@ -188,34 +188,6 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
             </div>
           )}
           
-          {/* 再生インジケータ */}
-          {isPlaying && (
-            <div className="absolute left-2 top-2 rounded bg-red-600 px-2 py-1 text-xs font-medium text-white animate-pulse">
-              再生中
-            </div>
-          )}
-          
-          {/* バッジ */}
-          {!isPlaying && (
-            <>
-              {model.uploadType === 'code' ? (
-                <div className="absolute left-2 top-2 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white">
-                  Three.jsコード
-                </div>
-              ) : (
-                <div className="absolute left-2 top-2 rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white">
-                  HTMLデモ
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* 価格バッジ */}
-          <div className="absolute right-2 top-2">
-            <div className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white">
-              無料
-            </div>
-          </div>
 
         </div>
 

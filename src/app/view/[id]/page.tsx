@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Heart, Download, Share2, Eye, Calendar, Tag, Maximize } from 'lucide-react'
+import { Heart, Share2, Eye, Calendar, Tag, Maximize, Edit } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate, formatFileSize } from '@/lib/utils'
 import ModelCard from '@/components/ui/ModelCard'
+import FollowButton from '@/components/ui/FollowButton'
 import { useStore } from '@/store/useStore'
 import { useLike } from '@/hooks/useLike'
 import { useViewCount } from '@/hooks/useViewCount'
+import { useAuth } from '@/contexts/AuthContext'
 import { getDefaultBGM } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
@@ -39,6 +41,8 @@ const ShareModal = dynamic(() => import('@/components/ui/ShareModal').then(mod =
 
 export default function ViewPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
   const [model, setModel] = useState<Model | null>(null)
   const [relatedModels, setRelatedModels] = useState<Model[]>([])
   const [activeTab, setActiveTab] = useState('description')
@@ -55,16 +59,36 @@ export default function ViewPage() {
 
   useEffect(() => {
     const fetchModel = async () => {
-      // Supabaseからモデルを取得
+      // Supabaseからモデルを取得（ユーザー情報も含む）
+      console.log('[ViewPage] Fetching model with id:', params.id)
       const { data: supabaseModel, error } = await supabase
         .from('models')
-        .select('*')
+        .select(`
+          *,
+          user:profiles!user_id(
+            id,
+            username,
+            display_name,
+            avatar_url,
+            bio,
+            follower_count
+          )
+        `)
         .eq('id', params.id)
         .single()
+      
+      console.log('[ViewPage] Supabase query result:', { supabaseModel, error })
       
       let foundModel: Model | null = null
       
       if (!error && supabaseModel) {
+        // デバッグログ
+        console.log('[ViewPage] Fetched model with user:', {
+          modelId: supabaseModel.id,
+          userId: supabaseModel.user_id,
+          user: supabaseModel.user
+        })
+        
         // SupabaseのデータをModel形式に変換
         foundModel = {
           id: supabaseModel.id,
@@ -89,7 +113,19 @@ export default function ViewPage() {
           // BGMデータ
           musicType: supabaseModel.bgm_type || (supabaseModel.metadata?.music_type as string) || undefined,
           musicUrl: supabaseModel.bgm_url || (supabaseModel.metadata?.music_url as string) || undefined,
-          musicName: supabaseModel.bgm_name || (supabaseModel.metadata?.music_name as string) || undefined
+          musicName: supabaseModel.bgm_name || (supabaseModel.metadata?.music_name as string) || undefined,
+          // ユーザー情報を追加
+          user: supabaseModel.user ? {
+            id: supabaseModel.user.id,
+            username: supabaseModel.user.username,
+            displayName: supabaseModel.user.display_name,
+            avatarUrl: supabaseModel.user.avatar_url,
+            bio: supabaseModel.user.bio,
+            followerCount: supabaseModel.user.follower_count || 0,
+            isPremium: false,
+            followingCount: 0,
+            createdAt: new Date().toISOString()
+          } : undefined
         }
       } else {
         // Supabaseから取得できない場合はローカルデータを使用
@@ -235,6 +271,20 @@ export default function ViewPage() {
     window.open(model.fileUrl, '_blank')
   }
 
+  const handleFollowClick = () => {
+    if (!user) {
+      // ログインページへリダイレクト
+      router.push('/profile')
+      return
+    }
+  }
+
+  const handleEditClick = () => {
+    if (model) {
+      router.push(`/edit/${model.id}`)
+    }
+  }
+
   const handleShare = async () => {
     if (!model) return
     const shareUrl = window.location.href
@@ -328,12 +378,86 @@ export default function ViewPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div>
           {/* メインコンテンツ */}
-          <div className="lg:col-span-2">
+          <div>
             {/* タイトルとアクション */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{model.title}</h1>
+              
+              {/* 作成者情報 */}
+              {model.user && (
+                <div className="mt-4 flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <Link href={`/user/${model.user.username}`} className="flex items-center gap-3">
+                    <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-purple-400 to-pink-400">
+                      {model.user.avatarUrl ? (
+                        <img
+                          src={model.user.avatarUrl}
+                          alt={model.user.username}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-white font-semibold">
+                          {model.user.username[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">
+                        {model.user.displayName || model.user.username}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatNumber(model.user.followerCount)} フォロワー
+                      </p>
+                    </div>
+                  </Link>
+                  
+                  {/* アクションボタン */}
+                  <div className="flex items-center gap-2">
+                    {user?.id === model.userId ? (
+                      // 制作者本人の場合は編集ボタン
+                      <button
+                        onClick={handleEditClick}
+                        className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="text-sm">編集</span>
+                      </button>
+                    ) : user ? (
+                      // ログイン済みの場合は通常のフォローボタン
+                      <FollowButton userId={model.userId} />
+                    ) : (
+                      // 未ログインの場合はログインを促すフォローボタン
+                      <button
+                        onClick={handleFollowClick}
+                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
+                      >
+                        <span className="text-sm">フォロー</span>
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={toggleLike}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-2 font-medium transition-colors ${
+                        isLiked
+                          ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                      <span className="text-sm">{formatNumber(likeCount || model.likeCount)}</span>
+                    </button>
+                    
+                    <button 
+                      onClick={handleShare}
+                      className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span className="text-sm">共有</span>
+                    </button>
+                  </div>
+                </div>
+              )}
               
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -344,28 +468,6 @@ export default function ViewPage() {
                   <Calendar className="h-4 w-4" />
                   <span>{formatDate(model.createdAt)}</span>
                 </div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={toggleLike}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                    isLiked
-                      ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-                  <span>{formatNumber(likeCount || model.likeCount)}</span>
-                </button>
-                
-                <button 
-                  onClick={handleShare}
-                  className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <Share2 className="h-5 w-5" />
-                  <span>共有</span>
-                </button>
               </div>
             </div>
 
@@ -471,69 +573,6 @@ export default function ViewPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* サイドバー */}
-          <div className="space-y-6">
-            {/* 作者情報 */}
-            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
-              <h3 className="mb-4 font-semibold dark:text-white">作者</h3>
-              {model.user && (
-                <Link href={`/user/${model.user.username}`} className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500">
-                    {model.user.avatarUrl ? (
-                      <img
-                        src={model.user.avatarUrl}
-                        alt={model.user.username}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full text-white">
-                        {model.user.username[0].toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">{model.user.displayName || model.user.username}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {formatNumber(model.user.followerCount)} フォロワー
-                    </p>
-                  </div>
-                </Link>
-              )}
-              
-              <button className="mt-4 w-full rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
-                フォロー
-              </button>
-            </div>
-
-            {/* ダウンロード */}
-            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
-              <h3 className="mb-4 font-semibold dark:text-white">ダウンロード</h3>
-              
-              <button
-                onClick={handleDownload}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 font-medium text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-              >
-                <Download className="h-5 w-5" />
-                ダウンロード
-              </button>
-              
-              <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  <span>{formatNumber(model.downloadCount)} ダウンロード</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 投げ銭 */}
-            <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
-              <h3 className="mb-4 font-semibold dark:text-white">クリエイターを応援</h3>
-              <button className="w-full rounded-lg border border-gray-300 dark:border-gray-600 py-2 font-medium hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700">
-                投げ銭する
-              </button>
             </div>
           </div>
         </div>
