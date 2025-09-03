@@ -211,6 +211,13 @@ Tables in `supabase/schema.sql` and migrations:
   - Compact music player (icon-only, hover for volume control)
 - **Feature Removals**:
   - Bookmark functionality completely removed (UI, store, database)
+  - Donation (投げ銭) feature removed including Stripe integration
 - **Dark Mode Support**:
   - About, Terms, and Privacy pages fully support dark mode
   - Upload page BGM selector uses dark theme
+- **View Page Updates**:
+  - Creator info (avatar, name, follow button) displayed below title
+  - Sidebar removed, full width layout
+  - Action buttons (follow, like, share) grouped with creator info
+  - Follow button visible to all users with login redirect for non-authenticated
+  - Edit button shown for content creators instead of follow button

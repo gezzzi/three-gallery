@@ -1,51 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Mail, Lock, User } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
-  initialMode?: 'signin' | 'signup'
 }
 
-export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModalProps) {
-  const [mode, setMode] = useState(initialMode)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
+export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  
-  const { signIn, signUp, signInWithGoogle } = useAuth()
+  const { signInWithGoogle } = useAuth()
 
   if (!isOpen) return null
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      if (mode === 'signin') {
-        await signIn(email, password)
-      } else {
-        if (!username) {
-          setError('ユーザー名を入力してください')
-          setLoading(false)
-          return
-        }
-        await signUp(email, password, username)
-      }
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました'
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleGoogleSignIn = async () => {
     try {
@@ -63,16 +31,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-lg bg-gray-800 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md rounded-lg bg-gray-800 p-6">
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-lg p-1 hover:bg-gray-700 text-gray-300"
+          className="absolute right-4 top-4 rounded-lg p-1 hover:bg-gray-700 text-gray-300"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-gray-100">
-          {mode === 'signin' ? 'ログイン' : '新規登録'}
+        <h2 className="mb-6 text-2xl font-bold text-gray-100 text-center">
+          ログイン / 新規登録
         </h2>
 
         {error && (
@@ -81,74 +49,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-200">
-                ユーザー名
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
-                  placeholder="username"
-                  required={mode === 'signup'}
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-200">
-              メールアドレス
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
-                placeholder="email@example.com"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-200">
-              パスワード
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-600 bg-gray-700 text-gray-200 py-2 pl-10 pr-3 focus:border-blue-400 focus:outline-none placeholder-gray-500"
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600"
-          >
-            {loading ? '処理中...' : (mode === 'signin' ? 'ログイン' : '登録')}
-          </button>
-        </form>
-
-        <div className="my-6 flex items-center">
-          <div className="flex-1 border-t border-gray-600" />
-          <span className="px-4 text-sm text-gray-400">または</span>
-          <div className="flex-1 border-t border-gray-600" />
+        <div className="text-center mb-6">
+          <p className="text-gray-400">
+            Googleアカウントでログインしてください
+          </p>
         </div>
 
         <button
@@ -176,29 +80,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
           Googleでログイン
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-400">
-          {mode === 'signin' ? (
-            <>
-              アカウントをお持ちでない方は
-              <button
-                onClick={() => setMode('signup')}
-                className="ml-1 text-blue-400 hover:underline"
-              >
-                新規登録
-              </button>
-            </>
-          ) : (
-            <>
-              すでにアカウントをお持ちの方は
-              <button
-                onClick={() => setMode('signin')}
-                className="ml-1 text-blue-400 hover:underline"
-              >
-                ログイン
-              </button>
-            </>
-          )}
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-xs text-gray-500">
+            ログインすることで、利用規約とプライバシーポリシーに同意したものとみなされます
+          </p>
+        </div>
       </div>
     </div>
   )
