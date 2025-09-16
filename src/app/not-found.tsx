@@ -46,12 +46,6 @@ export default function NotFound() {
           </h3>
           <div className="flex flex-wrap justify-center gap-2">
             <Link
-              href="/trending"
-              className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
-            >
-              トレンド
-            </Link>
-            <Link
               href="/upload"
               className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-colors"
             >

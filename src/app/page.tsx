@@ -3,28 +3,18 @@
 import { useState, useEffect } from 'react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
-import { TrendingUp, Clock, Star, Download } from 'lucide-react'
+import { Zap, Heart } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const tabs = [
-  { id: 'trending', label: 'トレンド', icon: TrendingUp },
-  { id: 'newest', label: '新着', icon: Clock },
-  { id: 'popular', label: '人気', icon: Star },
-  { id: 'downloaded', label: 'DL数順', icon: Download },
-]
-
-const timeRanges = [
-  { id: '24h', label: '24時間' },
-  { id: 'week', label: '週間' },
-  { id: 'month', label: '月間' },
-  { id: 'all', label: '全期間' },
+  { id: 'newest', label: '新着', icon: Zap },
+  { id: 'popular', label: '人気', icon: Heart },
 ]
 
 const ITEMS_PER_PAGE = 12 // 1ページあたりの表示件数
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState('trending')
-  const [timeRange, setTimeRange] = useState('24h')
+  const [activeTab, setActiveTab] = useState('newest')
   const [allModels, setAllModels] = useState<Model[]>([]) // 全てのモデル
   const [displayModels, setDisplayModels] = useState<Model[]>([]) // 表示中のモデル
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE) // 現在の表示件数
@@ -62,7 +52,6 @@ export default function HomePage() {
             metadata: model.metadata || {},
             tags: model.tags || [],
             viewCount: model.view_count || 0,
-            downloadCount: model.download_count || 0,
             likeCount: model.like_count || 0,
             createdAt: model.created_at,
             updatedAt: model.updated_at || model.created_at,
@@ -95,23 +84,13 @@ export default function HomePage() {
       const sortedModels = [...models]
       
       switch (activeTab) {
-        case 'trending':
-          sortedModels.sort((a, b) => {
-            const scoreA = a.viewCount + a.likeCount * 2 + a.downloadCount * 3
-            const scoreB = b.viewCount + b.likeCount * 2 + b.downloadCount * 3
-            return scoreB - scoreA
-          })
-          break
         case 'newest':
-          sortedModels.sort((a, b) => 
+          sortedModels.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
           break
         case 'popular':
           sortedModels.sort((a, b) => b.likeCount - a.likeCount)
-          break
-        case 'downloaded':
-          sortedModels.sort((a, b) => b.downloadCount - a.downloadCount)
           break
       }
       
@@ -122,7 +101,7 @@ export default function HomePage() {
     }
     
     fetchModels()
-  }, [activeTab, timeRange, displayCount])
+  }, [activeTab, displayCount])
 
   // もっと見るボタンのクリックハンドラ
   const handleLoadMore = () => {
@@ -143,11 +122,6 @@ export default function HomePage() {
     setDisplayCount(ITEMS_PER_PAGE)
   }
 
-  // 期間切り替え時に表示件数をリセット
-  const handleTimeRangeChange = (rangeId: string) => {
-    setTimeRange(rangeId)
-    setDisplayCount(ITEMS_PER_PAGE)
-  }
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">
@@ -184,24 +158,6 @@ export default function HomePage() {
             })}
           </div>
           
-          {/* 期間選択 */}
-          {activeTab === 'trending' && (
-            <div className="flex gap-0.5 sm:gap-1 rounded-lg bg-gray-800 p-0.5 sm:p-1">
-              {timeRanges.map((range) => (
-                <button
-                  key={range.id}
-                  onClick={() => handleTimeRangeChange(range.id)}
-                  className={`rounded-md px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-                    timeRange === range.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                >
-                  {range.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

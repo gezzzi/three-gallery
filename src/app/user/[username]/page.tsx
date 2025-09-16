@@ -29,7 +29,6 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false)
   const [stats, setStats] = useState({
     totalViews: 0,
-    totalDownloads: 0,
     totalLikes: 0,
   })
 
@@ -47,9 +46,8 @@ export default function UserProfilePage() {
       // 統計情報を計算
       const totalStats = userModels.reduce((acc, model) => ({
         totalViews: acc.totalViews + model.viewCount,
-        totalDownloads: acc.totalDownloads + model.downloadCount,
         totalLikes: acc.totalLikes + model.likeCount,
-      }), { totalViews: 0, totalDownloads: 0, totalLikes: 0 })
+      }), { totalViews: 0, totalLikes: 0 })
       
       setStats(totalStats)
     }
@@ -188,10 +186,6 @@ export default function UserProfilePage() {
             <div className="rounded-lg bg-white/10 p-4 text-center backdrop-blur">
               <p className="text-2xl font-bold">{formatNumber(stats.totalViews)}</p>
               <p className="text-sm text-blue-100">総視聴数</p>
-            </div>
-            <div className="rounded-lg bg-white/10 p-4 text-center backdrop-blur">
-              <p className="text-2xl font-bold">{formatNumber(stats.totalDownloads)}</p>
-              <p className="text-sm text-blue-100">総DL数</p>
             </div>
             <div className="rounded-lg bg-white/10 p-4 text-center backdrop-blur">
               <p className="text-2xl font-bold">{formatNumber(stats.totalLikes)}</p>

@@ -75,41 +75,6 @@ export async function createLikeNotification(
   }
 }
 
-// ダウンロード時の通知を作成
-export async function createDownloadNotification(
-  modelOwnerId: string,
-  downloaderId: string,
-  downloaderName: string,
-  modelId: string,
-  modelTitle: string
-) {
-  // 自分の作品のダウンロードは通知しない
-  if (modelOwnerId === downloaderId) return true
-
-  try {
-    const response = await fetch('/api/notifications/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: modelOwnerId,
-        type: 'download',
-        title: '作品がダウンロードされました',
-        message: `${downloaderName}さんが「${modelTitle}」をダウンロードしました`,
-        data: {
-          fromUserId: downloaderId,
-          fromUserName: downloaderName,
-          modelId,
-          modelTitle
-        }
-      })
-    })
-    
-    return response.ok
-  } catch (error) {
-    console.error('Error creating download notification:', error)
-    return false
-  }
-}
 
 // 新作アップロード時の通知を作成（フォロワー全員に）
 export async function createUploadNotification(

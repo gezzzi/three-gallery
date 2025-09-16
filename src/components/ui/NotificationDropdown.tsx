@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bell, User, Heart, Download, Upload, Eye, Info, X, Check, Trash2 } from 'lucide-react'
+import { Bell, User, Heart, Upload, Eye, Info, X, Check, Trash2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Notification } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils'
 const notificationIcons = {
   new_follower: User,
   like: Heart,
-  download: Download,
   new_upload: Upload,
   view_milestone: Eye,
   system: Info,
@@ -191,7 +190,6 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                       "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
                       notification.type === 'new_follower' && "bg-purple-900/20 text-purple-400",
                       notification.type === 'like' && "bg-red-900/20 text-red-400",
-                      notification.type === 'download' && "bg-green-900/20 text-green-400",
                       notification.type === 'new_upload' && "bg-blue-900/20 text-blue-400",
                       notification.type === 'view_milestone' && "bg-indigo-900/20 text-indigo-400",
                       notification.type === 'system' && "bg-gray-700 text-gray-400"

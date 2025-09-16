@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { ShoppingBag, Download, LogIn, Loader2, Package } from 'lucide-react'
+import { ShoppingBag, LogIn, Loader2, Package } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
 import { useStore } from '@/store/useStore'
@@ -56,11 +56,6 @@ export default function PurchasesPage() {
     }
   }
 
-  const handleDownload = (model: Model) => {
-    // ダウンロード処理（実際の実装では適切なダウンロード処理を行う）
-    console.log('Downloading model:', model.title)
-    alert(`${model.title} のダウンロードを開始します`)
-  }
 
   // ローディング中
   if (authLoading || loading) {
@@ -120,7 +115,7 @@ export default function PurchasesPage() {
 
       {/* 購入統計 */}
       {purchasedModelsData.length > 0 && (
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-4">
           <div className="rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 p-4 text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -131,27 +126,6 @@ export default function PurchasesPage() {
             </div>
           </div>
           
-          <div className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 p-4 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-90">ダウンロード済み</p>
-                <p className="text-3xl font-bold mt-1">
-                  {purchasedModelsData.length}
-                </p>
-              </div>
-              <ShoppingBag className="h-8 w-8 opacity-50" />
-            </div>
-          </div>
-          
-          <div className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 p-4 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-90">ダウンロード可能</p>
-                <p className="text-3xl font-bold mt-1">{purchasedModelsData.length}</p>
-              </div>
-              <Download className="h-8 w-8 opacity-50" />
-            </div>
-          </div>
         </div>
       )}
 
@@ -163,16 +137,6 @@ export default function PurchasesPage() {
             {purchasedModelsData.map((model) => (
               <div key={model.id} className="relative">
                 <ModelCard model={model} />
-                {/* ダウンロードボタンオーバーレイ */}
-                <div className="absolute top-2 right-2 z-10">
-                  <button
-                    onClick={() => handleDownload(model)}
-                    className="rounded-lg bg-green-600 p-2 text-white shadow-lg hover:bg-green-700 transition-colors"
-                    title="ダウンロード"
-                  >
-                    <Download className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
             ))}
           </div>

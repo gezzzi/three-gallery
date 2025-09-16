@@ -41,7 +41,7 @@ function SearchContent() {
   const [filters, setFilters] = useState({
     category: initialTag || 'すべて',
     license: 'all',
-    sortBy: 'relevance' as 'relevance' | 'newest' | 'popular' | 'downloads',
+    sortBy: 'relevance' as 'relevance' | 'newest' | 'popular',
   })
 
   const performSearch = () => {
@@ -87,9 +87,6 @@ function SearchContent() {
           break
         case 'popular':
           filtered.sort((a, b) => b.likeCount - a.likeCount)
-          break
-        case 'downloads':
-          filtered.sort((a, b) => b.downloadCount - a.downloadCount)
           break
       }
       
@@ -196,13 +193,12 @@ function SearchContent() {
               <label className="mb-2 block text-sm font-medium">並び順</label>
               <select
                 value={filters.sortBy}
-                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as 'relevance' | 'newest' | 'popular' | 'downloads' })}
+                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as 'relevance' | 'newest' | 'popular' })}
                 className="w-full rounded-lg border px-3 py-2"
               >
                 <option value="relevance">関連度順</option>
                 <option value="newest">新着順</option>
                 <option value="popular">人気順</option>
-                <option value="downloads">DL数順</option>
               </select>
             </div>
           </div>

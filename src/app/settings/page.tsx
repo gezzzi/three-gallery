@@ -4,30 +4,22 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { 
-  User, 
-  Lock, 
-  Bell, 
-  Palette, 
-  Shield,
+import {
+  User,
+  Bell,
+  Palette,
   Loader2,
   Check,
   X,
   ChevronRight,
-  Eye,
-  EyeOff,
   LogOut,
   Trash2,
   Save
 } from 'lucide-react'
 
-type SettingsTab = 'account' | 'notifications' | 'display' | 'privacy' | 'security'
+type SettingsTab = 'account' | 'notifications' | 'display'
 
 interface NotificationSettings {
-  emailNewFollower: boolean
-  emailNewComment: boolean
-  emailNewLike: boolean
-  emailNewPurchase: boolean
   pushNewFollower: boolean
   pushNewComment: boolean
   pushNewLike: boolean
@@ -37,19 +29,8 @@ interface NotificationSettings {
 interface DisplaySettings {
   theme: 'light' | 'dark' | 'system'
   language: 'ja' | 'en'
-  showNSFW: boolean
-  autoplayVideos: boolean
-  highQualityImages: boolean
 }
 
-interface PrivacySettings {
-  profileVisibility: 'public' | 'followers' | 'private'
-  showEmail: boolean
-  showFollowerCount: boolean
-  showFollowingCount: boolean
-  allowMessages: 'everyone' | 'followers' | 'none'
-  allowTagging: boolean
-}
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -64,20 +45,9 @@ export default function SettingsPage() {
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
-  const [website, setWebsite] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   // Notification settings
   const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNewFollower: true,
-    emailNewComment: true,
-    emailNewLike: false,
-    emailNewPurchase: true,
     pushNewFollower: true,
     pushNewComment: true,
     pushNewLike: false,
@@ -88,20 +58,8 @@ export default function SettingsPage() {
   const [display, setDisplay] = useState<DisplaySettings>({
     theme: 'light',
     language: 'ja',
-    showNSFW: false,
-    autoplayVideos: true,
-    highQualityImages: true,
   })
   
-  // Privacy settings
-  const [privacy, setPrivacy] = useState<PrivacySettings>({
-    profileVisibility: 'public',
-    showEmail: false,
-    showFollowerCount: true,
-    showFollowingCount: true,
-    allowMessages: 'everyone',
-    allowTagging: true,
-  })
 
   const loadSettings = async () => {
     if (!user) {
@@ -135,7 +93,6 @@ export default function SettingsPage() {
         setUsername(profile.username || '')
         setDisplayName(profile.display_name || '')
         setBio(profile.bio || '')
-        setWebsite(profile.website || '')
       }
 
       setEmail(user.email || '')
@@ -201,7 +158,6 @@ export default function SettingsPage() {
           username,
           display_name: displayName,
           bio,
-          website,
           updated_at: new Date().toISOString(),
         })
 
@@ -215,18 +171,6 @@ export default function SettingsPage() {
         if (emailError) throw emailError
       }
 
-      // パスワード変更
-      if (newPassword && newPassword === confirmPassword) {
-        const { error: passwordError } = await supabase.auth.updateUser({
-          password: newPassword,
-        })
-        if (passwordError) throw passwordError
-        
-        // パスワードフィールドをクリア
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-      }
 
       setMessage({ type: 'success', text: 'アカウント情報を更新しました' })
     } catch (error) {
@@ -277,21 +221,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSavePrivacy = async () => {
-    setSaving(true)
-    setMessage(null)
-    
-    try {
-      // プライバシー設定を保存（将来的にDBに保存）
-      localStorage.setItem('privacy_settings', JSON.stringify(privacy))
-      setMessage({ type: 'success', text: 'プライバシー設定を更新しました' })
-    } catch (error) {
-      console.error('プライバシー設定エラー:', error)
-      setMessage({ type: 'error', text: 'プライバシー設定の更新に失敗しました' })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handleDeleteAccount = async () => {
     if (!confirm('本当にアカウントを削除しますか？この操作は取り消せません。')) return
@@ -329,8 +258,6 @@ export default function SettingsPage() {
     { id: 'account', label: 'アカウント', icon: User },
     { id: 'notifications', label: '通知', icon: Bell },
     { id: 'display', label: '表示', icon: Palette },
-    { id: 'privacy', label: 'プライバシー', icon: Shield },
-    { id: 'security', label: 'セキュリティ', icon: Lock },
   ]
 
   return (
@@ -440,91 +367,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ウェブサイト</label>
-                  <input
-                    type="url"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                    placeholder="https://example.com"
-                  />
-                </div>
 
-                <div className="border-t pt-6">
-                  <h3 className="mb-4 text-lg font-medium">パスワード変更</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">現在のパスワード</label>
-                      <div className="relative">
-                        <input
-                          type={showCurrentPassword ? 'text' : 'password'}
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          className="w-full rounded-lg border px-4 py-2 pr-10 focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-400" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">新しいパスワード</label>
-                      <div className="relative">
-                        <input
-                          type={showNewPassword ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full rounded-lg border px-4 py-2 pr-10 focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-400" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">パスワード確認</label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full rounded-lg border px-4 py-2 pr-10 focus:border-blue-500 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-gray-400" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 <div className="flex justify-between">
                   <button
@@ -560,48 +403,6 @@ export default function SettingsPage() {
               <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">通知設定</h2>
               
               <div className="space-y-6">
-                <div>
-                  <h3 className="mb-4 font-medium">メール通知</h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center justify-between">
-                      <span>新しいフォロワー</span>
-                      <input
-                        type="checkbox"
-                        checked={notifications.emailNewFollower}
-                        onChange={(e) => setNotifications({ ...notifications, emailNewFollower: e.target.checked })}
-                        className="h-5 w-5 rounded text-blue-600"
-                      />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しいコメント</span>
-                      <input
-                        type="checkbox"
-                        checked={notifications.emailNewComment}
-                        onChange={(e) => setNotifications({ ...notifications, emailNewComment: e.target.checked })}
-                        className="h-5 w-5 rounded text-blue-600"
-                      />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しいいいね</span>
-                      <input
-                        type="checkbox"
-                        checked={notifications.emailNewLike}
-                        onChange={(e) => setNotifications({ ...notifications, emailNewLike: e.target.checked })}
-                        className="h-5 w-5 rounded text-blue-600"
-                      />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しい購入</span>
-                      <input
-                        type="checkbox"
-                        checked={notifications.emailNewPurchase}
-                        onChange={(e) => setNotifications({ ...notifications, emailNewPurchase: e.target.checked })}
-                        className="h-5 w-5 rounded text-blue-600"
-                      />
-                    </label>
-                  </div>
-                </div>
-
                 <div>
                   <h3 className="mb-4 font-medium">プッシュ通知</h3>
                   <div className="space-y-3">
@@ -693,47 +494,6 @@ export default function SettingsPage() {
                   </select>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">NSFW コンテンツを表示</span>
-                      <p className="text-sm text-gray-500">成人向けコンテンツの表示を許可します</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={display.showNSFW}
-                      onChange={(e) => setDisplay({ ...display, showNSFW: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">動画の自動再生</span>
-                      <p className="text-sm text-gray-500">フィード内の動画を自動的に再生します</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={display.autoplayVideos}
-                      onChange={(e) => setDisplay({ ...display, autoplayVideos: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">高画質画像</span>
-                      <p className="text-sm text-gray-500">より高画質な画像を読み込みます（データ使用量が増加）</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={display.highQualityImages}
-                      onChange={(e) => setDisplay({ ...display, highQualityImages: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-                </div>
-
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveDisplay}
@@ -752,145 +512,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* プライバシー設定 */}
-          {activeTab === 'privacy' && (
-            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
-              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">プライバシー設定</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">プロフィールの公開範囲</label>
-                  <select
-                    value={privacy.profileVisibility}
-                    onChange={(e) => setPrivacy({ ...privacy, profileVisibility: e.target.value as 'public' | 'followers' | 'private' })}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                  >
-                    <option value="public">全体に公開</option>
-                    <option value="followers">フォロワーのみ</option>
-                    <option value="private">非公開</option>
-                  </select>
-                </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">メッセージの受信</label>
-                  <select
-                    value={privacy.allowMessages}
-                    onChange={(e) => setPrivacy({ ...privacy, allowMessages: e.target.value as 'everyone' | 'followers' | 'none' })}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                  >
-                    <option value="everyone">全員から受信</option>
-                    <option value="followers">フォロワーのみ</option>
-                    <option value="none">受信しない</option>
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="flex items-center justify-between">
-                    <span>メールアドレスを公開</span>
-                    <input
-                      type="checkbox"
-                      checked={privacy.showEmail}
-                      onChange={(e) => setPrivacy({ ...privacy, showEmail: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between">
-                    <span>フォロワー数を表示</span>
-                    <input
-                      type="checkbox"
-                      checked={privacy.showFollowerCount}
-                      onChange={(e) => setPrivacy({ ...privacy, showFollowerCount: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between">
-                    <span>フォロー中の数を表示</span>
-                    <input
-                      type="checkbox"
-                      checked={privacy.showFollowingCount}
-                      onChange={(e) => setPrivacy({ ...privacy, showFollowingCount: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between">
-                    <span>タグ付けを許可</span>
-                    <input
-                      type="checkbox"
-                      checked={privacy.allowTagging}
-                      onChange={(e) => setPrivacy({ ...privacy, allowTagging: e.target.checked })}
-                      className="h-5 w-5 rounded text-blue-600"
-                    />
-                  </label>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSavePrivacy}
-                    disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
-                  >
-                    {saving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    保存
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* セキュリティ設定 */}
-          {activeTab === 'security' && (
-            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
-              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">セキュリティ設定</h2>
-              
-              <div className="space-y-6">
-                <div className="rounded-lg border p-4">
-                  <h3 className="mb-2 font-medium">二要素認証</h3>
-                  <p className="mb-4 text-sm text-gray-600">
-                    アカウントのセキュリティを強化するため、二要素認証を有効にすることをお勧めします。
-                  </p>
-                  <button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                    二要素認証を設定
-                  </button>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="mb-2 font-medium">ログインセッション</h3>
-                  <p className="mb-4 text-sm text-gray-600">
-                    現在アクティブなセッションを管理します。
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between rounded border p-3">
-                      <div>
-                        <p className="font-medium">現在のセッション</p>
-                        <p className="text-sm text-gray-500">Chrome - Windows</p>
-                      </div>
-                      <span className="text-sm text-green-600">アクティブ</span>
-                    </div>
-                  </div>
-                  <button className="mt-4 text-sm text-blue-600 hover:underline">
-                    他のすべてのセッションをログアウト
-                  </button>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <h3 className="mb-2 font-medium">アカウントアクティビティ</h3>
-                  <p className="mb-4 text-sm text-gray-600">
-                    最近のログイン履歴とアカウントアクティビティ。
-                  </p>
-                  <button className="text-sm text-blue-600 hover:underline">
-                    アクティビティログを表示
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

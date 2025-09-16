@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, Trash2, Calendar, TrendingUp } from 'lucide-react'
+import { Clock, Trash2, Calendar, BarChart } from 'lucide-react'
 import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
 import { useStore } from '@/store/useStore'
@@ -145,7 +145,7 @@ export default function HistoryPage() {
         {[
           { id: 'all', label: 'すべて', icon: Clock },
           { id: 'today', label: '今日', icon: Calendar },
-          { id: 'week', label: '今週', icon: TrendingUp },
+          { id: 'week', label: '今週', icon: BarChart },
           { id: 'month', label: '今月', icon: Clock },
         ].map((filter) => {
           const Icon = filter.icon
@@ -201,7 +201,7 @@ export default function HistoryPage() {
                 <p className="text-sm opacity-90">ユニーク</p>
                 <p className="text-3xl font-bold mt-1">{historyModels.length}</p>
               </div>
-              <TrendingUp className="h-8 w-8 opacity-50" />
+              <BarChart className="h-8 w-8 opacity-50" />
             </div>
           </div>
         </div>

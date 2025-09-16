@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Download, Eye, Tag, Code, Heart } from 'lucide-react'
+import { Eye, Tag, Code, Heart } from 'lucide-react'
 import { Model } from '@/types'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
@@ -239,10 +239,6 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
             <div className="flex items-center gap-1">
               <Heart className="h-3 w-3" />
               <span>{formatNumber(likeCount || model.likeCount)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Download className="h-3 w-3" />
-              <span>{formatNumber(model.downloadCount)}</span>
             </div>
           </div>
 

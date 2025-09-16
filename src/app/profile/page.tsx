@@ -170,7 +170,6 @@ export default function ProfilePage() {
           metadata: model.metadata || {},
           tags: model.tags || [],
           viewCount: model.view_count || 0,
-          downloadCount: model.download_count || 0,
           likeCount: model.like_count || 0,
           createdAt: model.created_at,
           updatedAt: model.updated_at || model.created_at,

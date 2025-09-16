@@ -26,7 +26,6 @@ export interface Model {
   licenseType: string
   isCommercialOk: boolean
   viewCount: number
-  downloadCount: number
   likeCount: number
   status: 'draft' | 'public' | 'private'
   tags: string[]
@@ -75,7 +74,7 @@ export interface Transaction {
 export interface Notification {
   id: string
   userId: string
-  type: 'new_follower' | 'like' | 'download' | 'new_upload' | 'view_milestone' | 'system'
+  type: 'new_follower' | 'like' | 'new_upload' | 'view_milestone' | 'system'
   title: string
   message: string
   data: {

@@ -102,7 +102,6 @@ export default function ViewPage() {
           metadata: supabaseModel.metadata || {},
           tags: supabaseModel.tags || [],
           viewCount: supabaseModel.view_count || 0,
-          downloadCount: supabaseModel.download_count || 0,
           likeCount: supabaseModel.like_count || 0,
           createdAt: supabaseModel.created_at,
           updatedAt: supabaseModel.updated_at || supabaseModel.created_at,
@@ -156,7 +155,6 @@ export default function ViewPage() {
             metadata: model.metadata || {},
             tags: model.tags || [],
             viewCount: model.view_count || 0,
-            downloadCount: model.download_count || 0,
             likeCount: model.like_count || 0,
             createdAt: model.created_at,
             updatedAt: model.updated_at || model.created_at,
@@ -265,11 +263,6 @@ export default function ViewPage() {
     }
   }, [])
 
-  const handleDownload = () => {
-    if (!model) return
-    // ダウンロード処理
-    window.open(model.fileUrl, '_blank')
-  }
 
   const handleFollowClick = () => {
     if (!user) {

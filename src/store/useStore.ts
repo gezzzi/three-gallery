@@ -49,7 +49,7 @@ interface StoreState {
     hasAnimation?: boolean
     licenseType?: string
     priceRange?: [number, number]
-    sortBy?: 'newest' | 'popular' | 'trending' | 'mostDownloaded'
+    sortBy?: 'newest' | 'popular'
   }
   setFilter: (key: string, value: unknown) => void
   clearFilters: () => void
