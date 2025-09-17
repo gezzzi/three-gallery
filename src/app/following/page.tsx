@@ -9,6 +9,7 @@ import { Model, User } from '@/types'
 import { useStore } from '@/store/useStore'
 import dynamic from 'next/dynamic'
 import { useFollow } from '@/hooks/useFollow'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
 
@@ -19,6 +20,7 @@ interface UserCardProps {
 
 function UserCard({ user, modelsCount }: UserCardProps) {
   const { isFollowing, toggleFollow, loading } = useFollow(user.id)
+  const { t } = useLanguage()
   
   return (
     <div className="rounded-lg border bg-white p-4 hover:shadow-lg transition-shadow">
@@ -45,8 +47,8 @@ function UserCard({ user, modelsCount }: UserCardProps) {
               <p className="mt-1 text-sm text-gray-600 line-clamp-2">{user.bio}</p>
             )}
             <div className="mt-2 flex gap-4 text-xs text-gray-500">
-              <span>{user.followerCount} フォロワー</span>
-              <span>{modelsCount} モデル</span>
+              <span>{user.followerCount} {t.following.followers}</span>
+              <span>{modelsCount} {t.following.models}</span>
             </div>
           </div>
         </div>
@@ -61,7 +63,7 @@ function UserCard({ user, modelsCount }: UserCardProps) {
               : 'bg-blue-600 text-white hover:bg-blue-700'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {loading ? '...' : isFollowing ? 'フォロー中' : 'フォロー'}
+          {loading ? '...' : isFollowing ? t.following.followingBtn : t.following.followBtn}
         </button>
       </div>
     </div>
@@ -77,6 +79,7 @@ export default function FollowingPage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'models' | 'users'>('models')
   const { followingUsers, models: storedModels } = useStore()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!authLoading) {
@@ -125,7 +128,7 @@ export default function FollowingPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto" />
-          <p className="mt-4 text-gray-600">読み込み中...</p>
+          <p className="mt-4 text-gray-600">{t.following.loading}</p>
         </div>
       </div>
     )
@@ -137,9 +140,9 @@ export default function FollowingPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center max-w-md">
           <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">ログインが必要です</h2>
+          <h2 className="text-2xl font-bold mb-2">{t.auth.loginRequired}</h2>
           <p className="text-gray-600 mb-6">
-            フォロー中のコンテンツを表示するにはログインが必要です
+            {t.auth.loginRequiredToViewFollowing}
           </p>
           <button
             onClick={() => setShowAuthModal(true)}
@@ -147,7 +150,7 @@ export default function FollowingPage() {
           >
             <div className="flex items-center gap-2">
               <LogIn className="h-5 w-5" />
-              ログイン / 新規登録
+              {t.auth.loginSignupTitle}
             </div>
           </button>
         </div>
@@ -168,10 +171,10 @@ export default function FollowingPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <Users className="h-8 w-8 text-blue-600" />
-          フォロー中
+          {t.following.title}
         </h1>
         <p className="mt-2 text-gray-600">
-          フォロー中のクリエイターの最新作品
+          {t.following.description}
         </p>
       </div>
 
@@ -186,7 +189,7 @@ export default function FollowingPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-700'
             }`}
           >
-            作品 ({followingModels.length})
+            {t.following.works} ({followingModels.length})
           </button>
           <button
             onClick={() => setActiveTab('users')}
@@ -196,7 +199,7 @@ export default function FollowingPage() {
                 : 'text-gray-500 border-transparent hover:text-gray-700'
             }`}
           >
-            クリエイター ({followingUsersData.length})
+            {t.following.creators} ({followingUsersData.length})
           </button>
         </div>
       </div>
@@ -213,16 +216,16 @@ export default function FollowingPage() {
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-xl text-gray-500 mb-2">
-              フォロー中のクリエイターの作品がありません
+              {t.following.noFollowingWorks}
             </p>
             <p className="text-gray-400 mb-6">
-              クリエイターをフォローして、最新作品をチェックしましょう
+              {t.following.followCreatorsDesc}
             </p>
             <button
               onClick={() => router.push('/')}
               className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700"
               >
-              クリエイターを探す
+              {t.following.exploreCreators}
             </button>
           </div>
         )
@@ -247,16 +250,16 @@ export default function FollowingPage() {
           <div className="text-center py-12">
             <UserPlus className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-xl text-gray-500 mb-2">
-              まだ誰もフォローしていません
+              {t.following.noFollowingUsers}
             </p>
             <p className="text-gray-400 mb-6">
-              気になるクリエイターをフォローしてみましょう
+              {t.following.followSomeCreators}
             </p>
             <button
               onClick={() => router.push('/')}
               className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700"
             >
-              クリエイターを探す
+              {t.following.exploreCreators}
             </button>
           </div>
         )

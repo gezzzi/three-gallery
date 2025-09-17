@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { supabase } from '@/lib/supabase'
+import type { Language } from '@/lib/translations'
 import {
   User,
   Bell,
-  Palette,
+  Globe,
   Loader2,
   Check,
   X,
@@ -26,15 +28,11 @@ interface NotificationSettings {
   pushNewPurchase: boolean
 }
 
-interface DisplaySettings {
-  theme: 'light' | 'dark' | 'system'
-  language: 'ja' | 'en'
-}
-
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading: authLoading, signOut } = useAuth()
+  const { language, setLanguage, t } = useLanguage()
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
   const [loading, setLoading] = useState(true) // 初期値をtrueに戻す
   const [saving, setSaving] = useState(false)
@@ -53,12 +51,9 @@ export default function SettingsPage() {
     pushNewLike: false,
     pushNewPurchase: true,
   })
-  
+
   // Display settings
-  const [display, setDisplay] = useState<DisplaySettings>({
-    theme: 'light',
-    language: 'ja',
-  })
+  const [displayLanguage, setDisplayLanguage] = useState<Language>(language)
   
 
   const loadSettings = async () => {
@@ -104,6 +99,19 @@ export default function SettingsPage() {
       //   .eq('user_id', user.id)
       //   .single()
 
+      // 言語設定を読み込み
+      const storedDisplay = localStorage.getItem('display_settings')
+      if (storedDisplay) {
+        try {
+          const settings = JSON.parse(storedDisplay)
+          if (settings.language) {
+            setDisplayLanguage(settings.language)
+          }
+        } catch (e) {
+          console.error('Failed to parse display settings:', e)
+        }
+      }
+
     } catch (error) {
       console.error('設定の読み込みエラー:', error)
     } finally {
@@ -113,25 +121,26 @@ export default function SettingsPage() {
 
   useEffect(() => {
     console.log('[Settings] useEffect実行 - authLoading:', authLoading, 'user:', user?.email)
-    
+
     // 認証チェック中
     if (authLoading) {
       console.log('[Settings] 認証中のためスキップ')
       setLoading(true)
       return
     }
-    
+
     // ユーザーがいる場合
     if (user) {
       console.log('[Settings] ユーザーあり、設定を読み込み')
       loadSettings()
     } else {
       // ユーザーがいない場合
-      console.log('[Settings] ユーザーなし、loading=falseに設定')
+      console.log('[Settings] ユーザーなし、loading=falseに設定、ホームへリダイレクト')
       setLoading(false)
+      router.push('/')
     }
-    
-  }, [user, authLoading])
+
+  }, [user, authLoading, router])
 
   const handleSaveAccount = async () => {
     if (!user) return
@@ -145,7 +154,7 @@ export default function SettingsPage() {
       
       if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url') {
         // ローカルモードの場合
-        setMessage({ type: 'success', text: 'アカウント情報を更新しました（ローカルモード）' })
+        setMessage({ type: 'success', text: `${t.settings.messages.accountUpdated}（ローカルモード）` })
         setSaving(false)
         return
       }
@@ -172,10 +181,10 @@ export default function SettingsPage() {
       }
 
 
-      setMessage({ type: 'success', text: 'アカウント情報を更新しました' })
+      setMessage({ type: 'success', text: t.settings.messages.accountUpdated })
     } catch (error) {
       console.error('アカウント更新エラー:', error)
-      setMessage({ type: 'error', text: 'アカウント情報の更新に失敗しました' })
+      setMessage({ type: 'error', text: t.settings.messages.accountUpdateFailed })
     } finally {
       setSaving(false)
     }
@@ -184,14 +193,14 @@ export default function SettingsPage() {
   const handleSaveNotifications = async () => {
     setSaving(true)
     setMessage(null)
-    
+
     try {
       // 通知設定を保存（将来的にDBに保存）
       localStorage.setItem('notification_settings', JSON.stringify(notifications))
-      setMessage({ type: 'success', text: '通知設定を更新しました' })
+      setMessage({ type: 'success', text: t.settings.messages.notificationsUpdated })
     } catch (error) {
       console.error('通知設定エラー:', error)
-      setMessage({ type: 'error', text: '通知設定の更新に失敗しました' })
+      setMessage({ type: 'error', text: t.settings.messages.notificationsUpdateFailed })
     } finally {
       setSaving(false)
     }
@@ -200,22 +209,19 @@ export default function SettingsPage() {
   const handleSaveDisplay = async () => {
     setSaving(true)
     setMessage(null)
-    
+
     try {
       // 表示設定を保存
-      localStorage.setItem('display_settings', JSON.stringify(display))
-      
-      // テーマを適用
-      if (display.theme === 'dark') {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-      
-      setMessage({ type: 'success', text: '表示設定を更新しました' })
+      const settings = { language: displayLanguage }
+      localStorage.setItem('display_settings', JSON.stringify(settings))
+
+      // 言語をグローバルに適用
+      setLanguage(displayLanguage)
+
+      setMessage({ type: 'success', text: t.settings.messages.displayUpdated })
     } catch (error) {
       console.error('表示設定エラー:', error)
-      setMessage({ type: 'error', text: '表示設定の更新に失敗しました' })
+      setMessage({ type: 'error', text: t.settings.messages.displayUpdateFailed })
     } finally {
       setSaving(false)
     }
@@ -223,11 +229,11 @@ export default function SettingsPage() {
 
 
   const handleDeleteAccount = async () => {
-    if (!confirm('本当にアカウントを削除しますか？この操作は取り消せません。')) return
-    
+    if (!confirm(t.settings.account.deleteAccountConfirm)) return
+
     try {
       // アカウント削除処理（実装は要検討）
-      alert('アカウント削除機能は現在準備中です')
+      alert(t.settings.messages.deleteAccountNotAvailable)
     } catch (error) {
       console.error('アカウント削除エラー:', error)
     }
@@ -243,26 +249,25 @@ export default function SettingsPage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
+          <p className="mt-4 text-gray-400">{t.common.loading}</p>
         </div>
       </div>
     )
   }
 
   if (!user) {
-    router.push('/')
     return null
   }
 
   const tabs = [
-    { id: 'account', label: 'アカウント', icon: User },
-    { id: 'notifications', label: '通知', icon: Bell },
-    { id: 'display', label: '表示', icon: Palette },
+    { id: 'account', label: t.settings.tabs.account, icon: User },
+    { id: 'notifications', label: t.settings.tabs.notifications, icon: Bell },
+    { id: 'display', label: t.settings.tabs.display, icon: Globe },
   ]
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">設定</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-100">{t.settings.title}</h1>
 
       <div className="flex gap-6">
         {/* サイドバー */}
@@ -276,8 +281,8 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id as SettingsTab)}
                   className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-900/20 text-blue-400 dark:bg-blue-900/20 dark:text-blue-400'
-                      : 'hover:bg-gray-700 text-gray-300 dark:hover:bg-gray-700 dark:text-gray-300'
+                      ? 'bg-blue-900/20 text-blue-400'
+                      : 'text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -290,13 +295,13 @@ export default function SettingsPage() {
             })}
           </nav>
 
-          <div className="mt-8 border-t pt-4">
+          <div className="mt-8 border-t border-gray-700 pt-4">
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/20"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-400 hover:bg-red-900/20"
             >
               <LogOut className="h-5 w-5" />
-              <span className="font-medium">ログアウト</span>
+              <span className="font-medium">{t.common.logout}</span>
             </button>
           </div>
         </div>
@@ -305,7 +310,7 @@ export default function SettingsPage() {
         <div className="flex-1">
           {message && (
             <div className={`mb-4 rounded-lg p-4 ${
-              message.type === 'success' ? 'bg-green-900/20 text-green-400 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-900/20 text-red-400 dark:bg-red-900/20 dark:text-red-400'
+              message.type === 'success' ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'
             }`}>
               <div className="flex items-center gap-2">
                 {message.type === 'success' ? (
@@ -320,50 +325,50 @@ export default function SettingsPage() {
 
           {/* アカウント設定 */}
           {activeTab === 'account' && (
-            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
-              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">アカウント設定</h2>
-              
+            <div className="rounded-lg bg-gray-800 p-6 border border-gray-700">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200">{t.settings.account.title}</h2>
+
               <div className="space-y-6">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">メールアドレス</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">{t.settings.account.email}</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">ユーザー名</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">{t.settings.account.username}</label>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none"
                     placeholder="username"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">表示名</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">{t.settings.account.displayName}</label>
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                    placeholder="表示名"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none"
+                    placeholder={t.settings.account.displayName}
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">自己紹介</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">{t.settings.account.bio}</label>
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={4}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                    placeholder="自己紹介を入力..."
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none"
+                    placeholder={`${t.settings.account.bio}を入力...`}
                   />
                 </div>
 
@@ -372,25 +377,25 @@ export default function SettingsPage() {
                 <div className="flex justify-between">
                   <button
                     onClick={handleDeleteAccount}
-                    className="rounded-lg border border-red-500 px-4 py-2 text-red-500 hover:bg-red-50"
+                    className="rounded-lg border border-red-500 px-4 py-2 text-red-500 hover:bg-red-900/20"
                   >
                     <div className="flex items-center gap-2">
                       <Trash2 className="h-4 w-4" />
-                      アカウントを削除
+                      {t.settings.account.deleteAccount}
                     </div>
                   </button>
 
                   <button
                     onClick={handleSaveAccount}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    保存
+                    {t.common.save}
                   </button>
                 </div>
               </div>
@@ -399,15 +404,15 @@ export default function SettingsPage() {
 
           {/* 通知設定 */}
           {activeTab === 'notifications' && (
-            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
-              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">通知設定</h2>
-              
+            <div className="rounded-lg bg-gray-800 p-6 border border-gray-700">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200">{t.settings.notifications.title}</h2>
+
               <div className="space-y-6">
                 <div>
-                  <h3 className="mb-4 font-medium">プッシュ通知</h3>
+                  <h3 className="mb-4 font-medium text-gray-200">{t.settings.notifications.push}</h3>
                   <div className="space-y-3">
-                    <label className="flex items-center justify-between">
-                      <span>新しいフォロワー</span>
+                    <label className="flex items-center justify-between text-gray-300">
+                      <span>{t.settings.notifications.newFollower}</span>
                       <input
                         type="checkbox"
                         checked={notifications.pushNewFollower}
@@ -415,8 +420,8 @@ export default function SettingsPage() {
                         className="h-5 w-5 rounded text-blue-600"
                       />
                     </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しいコメント</span>
+                    <label className="flex items-center justify-between text-gray-300">
+                      <span>{t.settings.notifications.newComment}</span>
                       <input
                         type="checkbox"
                         checked={notifications.pushNewComment}
@@ -424,8 +429,8 @@ export default function SettingsPage() {
                         className="h-5 w-5 rounded text-blue-600"
                       />
                     </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しいいいね</span>
+                    <label className="flex items-center justify-between text-gray-300">
+                      <span>{t.settings.notifications.newLike}</span>
                       <input
                         type="checkbox"
                         checked={notifications.pushNewLike}
@@ -433,8 +438,8 @@ export default function SettingsPage() {
                         className="h-5 w-5 rounded text-blue-600"
                       />
                     </label>
-                    <label className="flex items-center justify-between">
-                      <span>新しい購入</span>
+                    <label className="flex items-center justify-between text-gray-300">
+                      <span>{t.settings.notifications.newPurchase}</span>
                       <input
                         type="checkbox"
                         checked={notifications.pushNewPurchase}
@@ -449,14 +454,14 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveNotifications}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    保存
+                    {t.common.save}
                   </button>
                 </div>
               </div>
@@ -465,32 +470,19 @@ export default function SettingsPage() {
 
           {/* 表示設定 */}
           {activeTab === 'display' && (
-            <div className="rounded-lg bg-gray-800 p-6 dark:bg-gray-800">
-              <h2 className="mb-6 text-xl font-semibold text-gray-200 dark:text-gray-200">表示設定</h2>
-              
+            <div className="rounded-lg bg-gray-800 p-6 border border-gray-700">
+              <h2 className="mb-6 text-xl font-semibold text-gray-200">{t.settings.display.title}</h2>
+
               <div className="space-y-6">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">テーマ</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">{t.settings.display.language}</label>
                   <select
-                    value={display.theme}
-                    onChange={(e) => setDisplay({ ...display, theme: e.target.value as 'light' | 'dark' | 'system' })}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
+                    value={displayLanguage}
+                    onChange={(e) => setDisplayLanguage(e.target.value as Language)}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none"
                   >
-                    <option value="light">ライト</option>
-                    <option value="dark">ダーク</option>
-                    <option value="system">システム設定に従う</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-300">言語</label>
-                  <select
-                    value={display.language}
-                    onChange={(e) => setDisplay({ ...display, language: e.target.value as 'ja' | 'en' })}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-4 py-2 focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                  >
-                    <option value="ja">日本語</option>
-                    <option value="en">English</option>
+                    <option value="ja">{t.settings.display.languageOptions.ja}</option>
+                    <option value="en">{t.settings.display.languageOptions.en}</option>
                   </select>
                 </div>
 
@@ -498,20 +490,19 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveDisplay}
                     disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
+                    className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 disabled:bg-gray-600"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    保存
+                    {t.common.save}
                   </button>
                 </div>
               </div>
             </div>
           )}
-
 
         </div>
       </div>

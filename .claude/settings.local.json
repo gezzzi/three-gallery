@@ -26,7 +26,9 @@
       "Bash(npx supabase storage ls:*)",
       "Bash(git add:*)",
       "Bash(npx supabase:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(npm run lint)"
     ]
   },
   "disableAllHooks": true

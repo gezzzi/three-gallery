@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function PageFooter() {
+  const { t } = useLanguage()
   return (
     <footer className="mt-auto border-t border-gray-700 bg-gray-800 pb-16 md:pb-0">
       <div className="container mx-auto px-4 py-8">
@@ -10,13 +12,13 @@ export default function PageFooter() {
           {/* リンク */}
           <div className="flex items-center gap-6 text-sm text-gray-400">
             <Link href="/about" className="hover:text-gray-200 transition-colors">
-              運営者
+              {t.nav.about}
             </Link>
             <Link href="/terms" className="hover:text-gray-200 transition-colors">
-              利用規約
+              {t.nav.terms}
             </Link>
             <Link href="/privacy" className="hover:text-gray-200 transition-colors">
-              プライバシー
+              {t.nav.privacy}
             </Link>
           </div>
           

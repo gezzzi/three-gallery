@@ -5,15 +5,13 @@ import ModelCard from '@/components/ui/ModelCard'
 import { Model } from '@/types'
 import { Zap, Heart } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useLanguage } from '@/contexts/LanguageContext'
 
-const tabs = [
-  { id: 'newest', label: '新着', icon: Zap },
-  { id: 'popular', label: '人気', icon: Heart },
-]
 
 const ITEMS_PER_PAGE = 12 // 1ページあたりの表示件数
 
 export default function HomePage() {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('newest')
   const [allModels, setAllModels] = useState<Model[]>([]) // 全てのモデル
   const [displayModels, setDisplayModels] = useState<Model[]>([]) // 表示中のモデル
@@ -128,10 +126,10 @@ export default function HomePage() {
       {/* ヘッダー */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">
-          Three.js作品を探す
+          {t.home.title}
         </h1>
         <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-400">
-          クリエイターが作成した魅力的なThree.js作品を見つけよう
+          {t.home.subtitle}
         </p>
       </div>
 
@@ -139,7 +137,10 @@ export default function HomePage() {
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex gap-1 sm:gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
-            {tabs.map((tab) => {
+            {[
+              { id: 'newest', label: t.home.tabs.newest, icon: Zap },
+              { id: 'popular', label: t.home.tabs.popular, icon: Heart },
+            ].map((tab) => {
               const Icon = tab.icon
               return (
                 <button
@@ -164,7 +165,15 @@ export default function HomePage() {
       {/* カテゴリタグ */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {['すべて', 'キャラクター', '建築', '乗り物', '自然', '武器', 'アニメーション'].map((category) => (
+          {[
+            t.home.categories.all,
+            t.home.categories.character,
+            t.home.categories.architecture,
+            t.home.categories.vehicle,
+            t.home.categories.nature,
+            t.home.categories.weapon,
+            t.home.categories.animation
+          ].map((category) => (
             <button
               key={category}
               className="rounded-full border border-gray-600 bg-gray-800 px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-300 hover:border-blue-400 hover:text-blue-400 transition-colors"
@@ -180,14 +189,14 @@ export default function HomePage() {
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-400">読み込み中...</p>
+            <p className="mt-4 text-gray-400">{t.common.loading}</p>
           </div>
         </div>
       ) : (
         <>
           {displayModels.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400">作品が見つかりませんでした</p>
+              <p className="text-gray-400">{t.home.noWorksFound}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -211,10 +220,10 @@ export default function HomePage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    読み込み中...
+                    {t.common.loading}
                   </span>
                 ) : (
-                  `もっと見る (${displayModels.length}/${allModels.length})`
+                  `${t.home.loadMore} (${displayModels.length}/${allModels.length})`
                 )}
               </button>
             </div>

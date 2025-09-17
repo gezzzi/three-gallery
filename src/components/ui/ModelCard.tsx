@@ -6,6 +6,7 @@ import { Model } from '@/types'
 import { formatNumber, formatDate } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
 import { useLike } from '@/hooks/useLike'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface ModelCardProps {
   model: Model
@@ -25,8 +26,9 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
-  
+
   const { likeCount } = useLike(model.id)
+  const { t } = useLanguage()
 
   // グローバルな再生状態管理
   useEffect(() => {
@@ -177,7 +179,7 @@ export default function ModelCard({ model, showUser = true }: ModelCardProps) {
                 ) : model.uploadType === 'html' ? (
                   <div className="text-center">
                     <Code className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-xs">HTML/Three.js</p>
+                    <p className="text-xs">{t.view.htmlThreeJs}</p>
                   </div>
                 ) : (
                   <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">

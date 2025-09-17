@@ -3,6 +3,7 @@ import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import LayoutClient from "@/components/layout/LayoutClient";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -26,11 +27,13 @@ export default function RootLayout({
         <meta name="darkreader-lock" />
       </head>
       <body className={`${notoSansJP.variable} font-sans antialiased dark bg-gray-900 text-gray-100`} suppressHydrationWarning>
-        <AuthProvider>
-          <LayoutClient>
-            {children}
-          </LayoutClient>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <LayoutClient>
+              {children}
+            </LayoutClient>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { supabase } from '@/lib/supabase'
 import { Camera, Mail, Calendar, Edit2, Save, X, LogIn, Loader2, Trash2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -25,6 +26,7 @@ interface Profile {
 export default function ProfilePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { t } = useLanguage()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true) // 初期値をtrueに戻す
@@ -58,8 +60,8 @@ export default function ProfilePage() {
         const localProfile: Profile = {
           id: user.id,
           username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-          display_name: user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー',
-          bio: '3Dモデルクリエイター',
+          display_name: user.user_metadata?.name || user.email?.split('@')[0] || t.profile.displayName,
+          bio: 'Three.js Creator',
           website: '',
           avatar_url: user.user_metadata?.avatar_url,
           created_at: new Date().toISOString(),
@@ -93,7 +95,7 @@ export default function ProfilePage() {
           const localProfile: Profile = {
             id: user.id,
             username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-            display_name: user.user_metadata?.name || user.email?.split('@')[0] || 'ユーザー',
+            display_name: user.user_metadata?.name || user.email?.split('@')[0] || t.profile.displayName,
             bio: '',
             website: '',
             avatar_url: user.user_metadata?.avatar_url,
@@ -122,7 +124,7 @@ export default function ProfilePage() {
       const localProfile: Profile = {
         id: user.id,
         username: user.email?.split('@')[0] || 'user',
-        display_name: user.email?.split('@')[0] || 'ユーザー',
+        display_name: user.email?.split('@')[0] || t.profile.displayName,
         bio: '',
         website: '',
         avatar_url: user.user_metadata?.avatar_url,
@@ -329,7 +331,7 @@ export default function ProfilePage() {
   }
 
   const handleDeleteModel = async (modelId: string) => {
-    if (!confirm('この作品を削除してもよろしいですか？この操作は取り消せません。')) {
+    if (!confirm(t.profile.deleteWork)) {
       return
     }
 
@@ -354,13 +356,13 @@ export default function ProfilePage() {
       if (response.ok && result.success) {
         // 削除成功 - モデルリストから削除
         setUserModels(prev => prev.filter(m => m.id !== modelId))
-        alert('作品を削除しました')
+        alert(t.profile.deleteSuccess)
       } else {
-        alert(`削除に失敗しました: ${result.error}`)
+        alert(`${t.profile.deleteFailed}: ${result.error}`)
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('削除中にエラーが発生しました')
+      alert(t.profile.deleteError)
     } finally {
       setDeletingId(null)
     }
@@ -372,7 +374,7 @@ export default function ProfilePage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">読み込み中...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -384,15 +386,15 @@ export default function ProfilePage() {
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-center max-w-md">
           <LogIn className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">ログインが必要です</h2>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{t.upload.loginRequired}</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            プロフィールを表示するにはログインが必要です
+            {t.auth.loginRequired}
           </p>
           <button
             onClick={() => setShowAuthModal(true)}
             className="rounded-lg bg-blue-500 px-6 py-3 font-medium text-white hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
-            ログイン / 新規登録
+            {t.upload.loginSignup}
           </button>
         </div>
         
@@ -417,7 +419,7 @@ export default function ProfilePage() {
               {profile?.avatar_url || user.user_metadata?.avatar_url ? (
                 <img
                   src={profile?.avatar_url || user.user_metadata?.avatar_url}
-                  alt={profile?.display_name || 'ユーザー'}
+                  alt={profile?.display_name || t.profile.displayName}
                   className="h-full w-full rounded-full object-cover"
                 />
               ) : (
@@ -438,7 +440,7 @@ export default function ProfilePage() {
             {isEditing ? (
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">ユーザー名</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">{t.profile.username}</label>
                   <input
                     type="text"
                     value={editForm.username}
@@ -448,39 +450,39 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">表示名</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">{t.profile.displayName}</label>
                   <input
                     type="text"
                     value={editForm.display_name}
                     onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
                     className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                    placeholder="表示名"
+                    placeholder={t.profile.displayName}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">自己紹介</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">{t.profile.bio}</label>
                   <textarea
                     value={editForm.bio}
                     onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                     className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
                     rows={3}
-                    placeholder="自己紹介を入力..."
+                    placeholder={t.profile.bioPlaceholder}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">ウェブサイト</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-300 dark:text-gray-300">{t.profile.website}</label>
                   <input
                     type="url"
                     value={editForm.website}
                     onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
                     className="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-200 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-blue-400"
-                    placeholder="https://example.com"
+                    placeholder={t.profile.websitePlaceholder}
                   />
                 </div>
               </div>
             ) : (
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-200">{profile?.display_name || 'ユーザー'}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-200">{profile?.display_name || t.profile.displayName}</h1>
                 <p className="text-sm sm:text-base text-gray-400 dark:text-gray-400">@{profile?.username || 'username'}</p>
                 {profile?.bio && (
                   <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-300 dark:text-gray-300">{profile.bio}</p>
@@ -502,7 +504,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {profile?.created_at ? formatDate(profile.created_at) : '登録日不明'}
+                    {profile?.created_at ? formatDate(profile.created_at) : t.profile.joinedDate}
                   </div>
                 </div>
               </div>
@@ -523,14 +525,14 @@ export default function ProfilePage() {
                   ) : (
                     <Save className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
-                  保存
+                  {t.common.save}
                 </button>
                 <button
                   onClick={handleCancel}
                   className="flex items-center gap-1 sm:gap-2 rounded-lg border border-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  キャンセル
+                  {t.common.cancel}
                 </button>
               </div>
             ) : (
@@ -539,7 +541,7 @@ export default function ProfilePage() {
                 className="flex items-center gap-1 sm:gap-2 rounded-lg border border-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium hover:bg-gray-700 text-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                編集
+                {t.common.edit}
               </button>
             )}
           </div>
@@ -550,16 +552,16 @@ export default function ProfilePage() {
       <div className="mb-4 sm:mb-6 border-b overflow-x-auto">
         <nav className="flex gap-4 sm:gap-6 min-w-max">
           <button className="border-b-2 border-blue-500 pb-2 sm:pb-3 text-sm sm:text-base font-medium text-blue-400 whitespace-nowrap dark:border-blue-400 dark:text-blue-400">
-            アップロード ({userModels.length})
+            {t.profile.uploads} ({userModels.length})
           </button>
           <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
-            いいね
+            {t.common.likes}
           </button>
           <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
-            フォロー中
+            {t.common.following}
           </button>
           <button className="pb-2 sm:pb-3 text-sm sm:text-base font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap dark:text-gray-400 dark:hover:text-gray-200">
-            フォロワー
+            {t.profile.followers}
           </button>
         </nav>
       </div>
@@ -575,7 +577,7 @@ export default function ProfilePage() {
                   onClick={() => handleDeleteModel(model.id)}
                   disabled={deletingId === model.id}
                   className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 disabled:bg-gray-600 dark:bg-red-600 dark:hover:bg-red-700 dark:disabled:bg-gray-600"
-                  title="削除"
+                  title={t.profile.deleteTitle}
                 >
                   {deletingId === model.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -588,12 +590,12 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-400 dark:text-gray-500">まだアップロードしたモデルがありません</p>
+            <p className="text-gray-400 dark:text-gray-500">{t.profile.noUploads}</p>
             <button
               onClick={() => router.push('/upload')}
               className="mt-4 rounded-lg bg-blue-500 px-6 py-2 font-medium text-white hover:bg-blue-600 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
-              最初のモデルをアップロード
+              {t.profile.uploadFirst}
             </button>
           </div>
         )}

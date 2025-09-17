@@ -13,28 +13,29 @@ import { useStore } from '@/store/useStore'
 import { useLike } from '@/hooks/useLike'
 import { useViewCount } from '@/hooks/useViewCount'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { getDefaultBGM } from '@/lib/defaultBgm'
 import { supabase } from '@/lib/supabase'
 
-// HTMLビューアを動的インポート（SSR無効化）
+// Dynamically import HTML viewer (disable SSR)
 const HtmlPreview = dynamic(() => import('@/components/3d/HtmlPreview'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-800">
       <div className="text-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-600 border-t-blue-600 mx-auto" />
-        <p className="mt-4 text-gray-400">ビューアを読み込み中...</p>
+        <p className="mt-4 text-gray-400">Loading viewer...</p>
       </div>
     </div>
   ),
 })
 
-// 音楽プレイヤーを動的インポート
+// Dynamically import music player
 const MusicPlayer = dynamic(() => import('@/components/ui/MusicPlayer'), {
   ssr: false,
 })
 
-// 共有モーダルを動的インポート
+// Dynamically import share modal
 const ShareModal = dynamic(() => import('@/components/ui/ShareModal').then(mod => ({ default: mod.ShareModal })), {
   ssr: false,
 })
@@ -43,11 +44,12 @@ export default function ViewPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [model, setModel] = useState<Model | null>(null)
   const [relatedModels, setRelatedModels] = useState<Model[]>([])
   const [activeTab, setActiveTab] = useState('description')
   const [musicUrl, setMusicUrl] = useState<string | undefined>()
-  const [musicName, setMusicName] = useState<string>('無題の曲')
+  const [musicName, setMusicName] = useState<string>('')
   const [showShareModal, setShowShareModal] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const viewerContainerRef = useRef<HTMLDivElement>(null)
@@ -59,7 +61,7 @@ export default function ViewPage() {
 
   useEffect(() => {
     const fetchModel = async () => {
-      // Supabaseからモデルを取得（ユーザー情報も含む）
+      // Fetch model from Supabase (including user information)
       console.log('[ViewPage] Fetching model with id:', params.id)
       const { data: supabaseModel, error } = await supabase
         .from('models')
@@ -82,14 +84,14 @@ export default function ViewPage() {
       let foundModel: Model | null = null
       
       if (!error && supabaseModel) {
-        // デバッグログ
+        // Debug log
         console.log('[ViewPage] Fetched model with user:', {
           modelId: supabaseModel.id,
           userId: supabaseModel.user_id,
           user: supabaseModel.user
         })
         
-        // SupabaseのデータをModel形式に変換
+        // Convert Supabase data to Model format
         foundModel = {
           id: supabaseModel.id,
           userId: supabaseModel.user_id,
@@ -109,11 +111,11 @@ export default function ViewPage() {
           licenseType: supabaseModel.license_type || 'CC BY',
           isCommercialOk: supabaseModel.is_commercial_ok || false,
           fileSize: supabaseModel.file_size || 0,
-          // BGMデータ
+          // BGM data
           musicType: supabaseModel.bgm_type || (supabaseModel.metadata?.music_type as string) || undefined,
           musicUrl: supabaseModel.bgm_url || (supabaseModel.metadata?.music_url as string) || undefined,
           musicName: supabaseModel.bgm_name || (supabaseModel.metadata?.music_name as string) || undefined,
-          // ユーザー情報を追加
+          // Add user information
           user: supabaseModel.user ? {
             id: supabaseModel.user.id,
             username: supabaseModel.user.username,
@@ -127,14 +129,14 @@ export default function ViewPage() {
           } : undefined
         }
       } else {
-        // Supabaseから取得できない場合はローカルデータを使用
+        // Use local data if cannot fetch from Supabase
         const allModels = [...storedModels]
         foundModel = allModels.find(m => m.id === params.id) || null
       }
       
       if (foundModel) {
         setModel(foundModel)
-        // 関連モデルを取得
+        // Get related models
         const { data: relatedData } = await supabase
           .from('models')
           .select('*')
@@ -166,14 +168,14 @@ export default function ViewPage() {
           setRelatedModels(formattedRelated)
         }
         
-        // 閲覧履歴に追加
+        // Add to browsing history
         addToHistory(foundModel.id)
         
-        // 音楽のURLを設定
+        // Set music URL
         const metadata = foundModel.metadata as Record<string, unknown>
         
-        // 音楽のURLを設定
-        console.log('[ViewPage] BGMデータを確認:', {
+        // Set music URL
+        console.log('[ViewPage] Checking BGM data:', {
           musicType: foundModel.musicType,
           musicUrl: foundModel.musicUrl,
           musicName: foundModel.musicName,
@@ -186,59 +188,59 @@ export default function ViewPage() {
           music_url: metadata?.music_url
         })
         
-        // BGMカラムから直接取得（優先）
+        // Get directly from BGM columns (priority)
         if (foundModel.musicType === 'default') {
-          // metadataにmusicl_idがある場合
+          // If metadata has music_id
           if (metadata?.music_id) {
             const bgm = getDefaultBGM(metadata.music_id as string)
-            console.log('[ViewPage] デフォルトBGMを取得 (music_id):', bgm)
+            console.log('[ViewPage] Getting default BGM (music_id):', bgm)
             if (bgm) {
               setMusicUrl(bgm.url)
               setMusicName(bgm.name)
             }
           }
-          // bgm_urlが直接保存されている場合
+          // If bgm_url is directly saved
           else if (foundModel.musicUrl) {
-            console.log('[ViewPage] BGM URLが直接保存されています:', foundModel.musicUrl)
+            console.log('[ViewPage] BGM URL is directly saved:', foundModel.musicUrl)
             setMusicUrl(foundModel.musicUrl)
-            setMusicName(foundModel.musicName || 'デフォルトBGM')
+            setMusicName(foundModel.musicName || t.upload.selectFromDefault)
           }
         } else if (foundModel.musicType === 'upload' && foundModel.musicUrl) {
-          console.log('[ViewPage] アップロードBGM:', foundModel.musicUrl)
+          console.log('[ViewPage] Upload BGM:', foundModel.musicUrl)
           setMusicUrl(foundModel.musicUrl)
-          setMusicName(foundModel.musicName || 'アップロードされたBGM')
+          setMusicName(foundModel.musicName || t.upload.uploadCustom)
         }
-        // metadataから取得（互換性のため）
+        // Get from metadata (for compatibility)
         else if (metadata?.music_type === 'default') {
           if (metadata?.music_id) {
             const bgm = getDefaultBGM(metadata.music_id as string)
-            console.log('[ViewPage] デフォルトBGMを取得 (metadata.music_id):', bgm)
+            console.log('[ViewPage] Getting default BGM (metadata.music_id):', bgm)
             if (bgm) {
               setMusicUrl(bgm.url)
               setMusicName(bgm.name)
             }
           } else if (metadata?.music_url) {
-            console.log('[ViewPage] BGM URLがmetadataに保存されています:', metadata.music_url)
+            console.log('[ViewPage] BGM URL is saved in metadata:', metadata.music_url)
             setMusicUrl(metadata.music_url as string)
-            setMusicName((metadata.music_name as string) || 'デフォルトBGM')
+            setMusicName((metadata.music_name as string) || t.upload.selectFromDefault)
           }
         } else if (metadata?.music_type === 'upload' && metadata?.music_url) {
-          console.log('[ViewPage] アップロードBGM (metadata):', metadata.music_url)
+          console.log('[ViewPage] Upload BGM (metadata):', metadata.music_url)
           setMusicUrl(metadata.music_url as string)
-          setMusicName((metadata.music_name as string) || 'アップロードされたBGM')
+          setMusicName((metadata.music_name as string) || t.upload.uploadCustom)
         }
         
-        // 最終的な音楽設定の確認（この時点ではstateはまだ更新されていない）
+        // Final music configuration check (state not yet updated at this point)
       }
     }
     
     fetchModel()
   }, [params.id])
 
-  // ページ遷移時に前の音楽を停止
+  // Stop previous music on page transition
   useEffect(() => {
     return () => {
-      // このページを離れる時に音楽を停止
+      // Stop music when leaving this page
       if (currentAudioRef.current) {
         currentAudioRef.current.pause()
         currentAudioRef.current = null
@@ -246,12 +248,12 @@ export default function ViewPage() {
     }
   }, [params.id])
 
-  // 音楽URLが設定されたことを確認
+  // Confirm that music URL has been set
   useEffect(() => {
-    console.log('[ViewPage] 音楽URLが更新されました:', { musicUrl, musicName })
+    console.log('[ViewPage] Music URL updated:', { musicUrl, musicName })
   }, [musicUrl, musicName])
 
-  // 全画面表示の状態変化を監視
+  // Monitor fullscreen state changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
@@ -266,7 +268,7 @@ export default function ViewPage() {
 
   const handleFollowClick = () => {
     if (!user) {
-      // ログインページへリダイレクト
+      // Redirect to login page
       router.push('/profile')
       return
     }
@@ -284,7 +286,7 @@ export default function ViewPage() {
     const shareTitle = model.title
     const shareText = model.description || `${model.title} - Three Gallery`
 
-    // Web Share APIをサポートしている場合（主にモバイル）
+    // If Web Share API is supported (mainly mobile)
     if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
       try {
         await navigator.share({
@@ -294,14 +296,14 @@ export default function ViewPage() {
         })
         return
       } catch (err) {
-        // ユーザーがキャンセルした場合は何もしない
+        // Do nothing if user cancelled
         if ((err as Error).name === 'AbortError') {
           return
         }
       }
     }
 
-    // PCの場合はモーダルを表示
+    // Show modal for PC
     setShowShareModal(true)
   }
 
@@ -310,16 +312,16 @@ export default function ViewPage() {
 
     try {
       if (!document.fullscreenElement) {
-        // 全画面表示にする
+        // Enter fullscreen
         await viewerContainerRef.current.requestFullscreen()
         setIsFullscreen(true)
       } else {
-        // 全画面表示を解除
+        // Exit fullscreen
         await document.exitFullscreen()
         setIsFullscreen(false)
       }
     } catch (error) {
-      console.error('全画面表示の切り替えに失敗しました:', error)
+      console.error('Failed to toggle fullscreen:', error)
     }
   }
 
@@ -327,7 +329,7 @@ export default function ViewPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-lg text-gray-600 dark:text-gray-400">モデルが見つかりません</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">{t.view.modelNotFound}</p>
         </div>
       </div>
     )
@@ -335,7 +337,7 @@ export default function ViewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* HTMLビューア */}
+      {/* HTML viewer */}
       <div 
         ref={viewerContainerRef}
         className={`bg-gray-900 relative ${isFullscreen ? 'h-screen' : 'h-[80vh]'}`}
@@ -345,16 +347,16 @@ export default function ViewPage() {
           height="100%"
         />
         
-        {/* 全画面表示ボタン */}
+        {/* Fullscreen button */}
         <button
           onClick={toggleFullscreen}
           className="absolute bottom-4 left-4 z-20 flex items-center justify-center w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
-          title={isFullscreen ? '全画面表示を終了' : '全画面表示'}
+          title={isFullscreen ? t.view.exitFullscreen : t.view.enterFullscreen}
         >
           <Maximize className="h-5 w-5" />
         </button>
         
-        {/* 音楽プレイヤー */}
+        {/* Music player */}
         {musicUrl && (
           <div className="absolute bottom-4 right-4 z-20">
             <MusicPlayer
@@ -362,8 +364,8 @@ export default function ViewPage() {
               musicName={musicName}
               autoPlay={false}
               onPlay={() => {
-                // onPlayコールバックは一旦無効化（他の音楽停止機能は後で実装）
-                console.log('[ViewPage] 音楽が再生されました')
+                // onPlay callback temporarily disabled (other music stop functionality to be implemented later)
+                console.log('[ViewPage] Music started playing')
               }}
             />
           </div>
@@ -372,13 +374,13 @@ export default function ViewPage() {
 
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div>
-          {/* メインコンテンツ */}
+          {/* Main content */}
           <div>
-            {/* タイトルとアクション */}
+            {/* Title and actions */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{model.title}</h1>
               
-              {/* 作成者情報 */}
+              {/* Creator information */}
               {model.user && (
                 <div className="mt-4 flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                   <Link href={`/user/${model.user.username}`} className="flex items-center gap-3">
@@ -400,32 +402,32 @@ export default function ViewPage() {
                         {model.user.displayName || model.user.username}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatNumber(model.user.followerCount)} フォロワー
+                        {formatNumber(model.user.followerCount)} {t.view.followers}
                       </p>
                     </div>
                   </Link>
                   
-                  {/* アクションボタン */}
+                  {/* Action buttons */}
                   <div className="flex items-center gap-2">
                     {user?.id === model.userId ? (
-                      // 制作者本人の場合は編集ボタン
+                      // Edit button for content creator
                       <button
                         onClick={handleEditClick}
                         className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Edit className="h-4 w-4" />
-                        <span className="text-sm">編集</span>
+                        <span className="text-sm">{t.common.edit}</span>
                       </button>
                     ) : user ? (
-                      // ログイン済みの場合は通常のフォローボタン
+                      // Regular follow button for logged-in users
                       <FollowButton userId={model.userId} />
                     ) : (
-                      // 未ログインの場合はログインを促すフォローボタン
+                      // Follow button that prompts login for unauthenticated users
                       <button
                         onClick={handleFollowClick}
                         className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
                       >
-                        <span className="text-sm">フォロー</span>
+                        <span className="text-sm">{t.common.follow}</span>
                       </button>
                     )}
                     
@@ -446,7 +448,7 @@ export default function ViewPage() {
                       className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Share2 className="h-4 w-4" />
-                      <span className="text-sm">共有</span>
+                      <span className="text-sm">{t.common.share}</span>
                     </button>
                   </div>
                 </div>
@@ -455,7 +457,7 @@ export default function ViewPage() {
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Eye className="h-4 w-4" />
-                  <span>{formatNumber(viewCount || model.viewCount)} 回視聴</span>
+                  <span>{formatNumber(viewCount || model.viewCount)}{t.home.views}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Calendar className="h-4 w-4" />
@@ -464,7 +466,7 @@ export default function ViewPage() {
               </div>
             </div>
 
-            {/* タブコンテンツ */}
+            {/* Tab content */}
             <div className="rounded-lg bg-white dark:bg-gray-800 p-6">
               <div className="mb-4 flex gap-4 border-b">
                 <button
@@ -475,7 +477,7 @@ export default function ViewPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
-                  説明
+                  {t.view.description}
                 </button>
                 <button
                   onClick={() => setActiveTab('specs')}
@@ -485,7 +487,7 @@ export default function ViewPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
-                  スペック
+                  {t.view.specs}
                 </button>
                 <button
                   onClick={() => setActiveTab('license')}
@@ -495,14 +497,14 @@ export default function ViewPage() {
                       : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                   }`}
                 >
-                  ライセンス
+                  {t.view.license}
                 </button>
               </div>
 
               {activeTab === 'description' && (
                 <div>
                   <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                    {model.description || 'このモデルの説明はありません。'}
+                    {model.description || t.view.noDescription}
                   </p>
                   
                   {model.tags.length > 0 && (
@@ -527,14 +529,14 @@ export default function ViewPage() {
               {activeTab === 'specs' && (
                 <div className="space-y-3">
                   <div className="flex justify-between py-2 border-b dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">ファイルサイズ</span>
+                    <span className="text-gray-600 dark:text-gray-400">{t.view.fileSize}</span>
                     <span className="font-medium dark:text-gray-200">
                       {model.fileSize ? formatFileSize(model.fileSize) : 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between py-2 border-b dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">フォーマット</span>
-                    <span className="font-medium dark:text-gray-200">HTML/JavaScript</span>
+                    <span className="text-gray-600 dark:text-gray-400">{t.view.format}</span>
+                    <span className="font-medium dark:text-gray-200">{t.view.htmlJavaScript}</span>
                   </div>
                 </div>
               )}
@@ -544,7 +546,7 @@ export default function ViewPage() {
                   <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">
                     <h3 className="font-semibold text-blue-900 dark:text-blue-300">{model.licenseType}</h3>
                     <p className="mt-2 text-sm text-blue-700 dark:text-blue-400">
-                      このモデルは{model.licenseType}ライセンスで提供されています。
+                      {t.view.licenseDescription.replace('{licenseType}', model.licenseType)}
                     </p>
                   </div>
                   
@@ -560,7 +562,7 @@ export default function ViewPage() {
                         </svg>
                       </span>
                       <span className="text-sm dark:text-gray-300">
-                        商用利用: {model.isCommercialOk ? '可能' : '不可'}
+                        {t.view.commercialUse}: {model.isCommercialOk ? t.view.allowed : t.view.notAllowed}
                       </span>
                     </div>
                   </div>
@@ -570,10 +572,10 @@ export default function ViewPage() {
           </div>
         </div>
 
-        {/* 関連作品 */}
+        {/* Related works */}
         {relatedModels.length > 0 && (
           <div className="mt-12">
-            <h2 className="mb-6 text-2xl font-bold dark:text-white">同じ作者の他の作品</h2>
+            <h2 className="mb-6 text-2xl font-bold dark:text-white">{t.view.otherWorks}</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {relatedModels.slice(0, 4).map((model) => (
                 <ModelCard key={model.id} model={model} showUser={false} />

@@ -4,15 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Users, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const menuItems = [
-  { icon: Home, label: 'ホーム', href: '/' },
-  { icon: Upload, label: 'アップロード', href: '/upload' },
-  { icon: Users, label: 'フォロー', href: '/following' },
-]
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Footer() {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const menuItems = [
+    { icon: Home, label: t.nav.home, href: '/' },
+    { icon: Upload, label: t.nav.upload, href: '/upload' },
+    { icon: Users, label: t.nav.following, href: '/following' },
+  ]
 
   return (
     <footer className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-gray-700 bg-gray-800">

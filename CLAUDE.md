@@ -194,11 +194,23 @@ Tables in `supabase/schema.sql` and migrations:
 
 ## Recent Major Changes
 
+### Feature Removals (Latest)
+- **Trending Page**: Completely removed including all navigation references
+- **Download Functionality**: All download features and counts removed
+- **Settings Page Simplifications**:
+  - Password change section removed
+  - Website field removed from account settings
+  - Security section completely removed
+  - Privacy section completely removed
+  - Email notifications removed (only push notifications remain)
+  - NSFW content, video autoplay, and high-quality image settings removed from display options
+
+### Earlier Major Changes
 - **Removed 3D Model Support**: Application now only supports HTML Three.js content
 - **Simplified Upload Flow**: Only HTML file upload or code editor options remain
 - **Updated UI Text**: Changed from "3Dモデル" to "Three.js作品" throughout
 - **Removed Components**: ModelViewer, ModelViewerWithPerformance deleted
-- **Type Updates**: Removed model-specific properties from Model interface
+- **Type Updates**: Removed model-specific properties (downloadCount, etc.) from Model interface
 - **UI Navigation Updates**:
   - Removed search bar from Header
   - Upload button moved from Header to Sidebar (desktop) and Footer (mobile)
