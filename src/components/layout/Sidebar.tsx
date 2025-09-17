@@ -5,20 +5,21 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Home, Users, Heart, Settings, Clock, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const menuItems = [
-  { icon: Home, label: 'ホーム', href: '/' },
-  { icon: Upload, label: 'アップロード', href: '/upload' },
-  { icon: Users, label: 'フォロー中', href: '/following' },
-  { icon: Heart, label: 'いいね', href: '/likes' },
-  { icon: Clock, label: '履歴', href: '/history' },
-  { icon: Settings, label: '設定', href: '/settings' },
-]
-
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const [isHovered, setIsHovered] = useState(false)
+  const { t } = useLanguage()
+
+  const menuItems = [
+    { icon: Home, label: t.nav.home, href: '/' },
+    { icon: Upload, label: t.nav.upload, href: '/upload' },
+    { icon: Users, label: t.nav.following, href: '/following' },
+    { icon: Heart, label: t.nav.likes, href: '/likes' },
+    { icon: Clock, label: t.nav.history, href: '/history' },
+    { icon: Settings, label: t.nav.settings, href: '/settings' },
+  ]
 
   return (
     <aside 

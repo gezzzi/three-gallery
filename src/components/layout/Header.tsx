@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Bell, User, LogOut, Settings } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import dynamic from 'next/dynamic'
 
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
@@ -13,6 +14,7 @@ const NotificationDropdown = dynamic(() => import('@/components/ui/NotificationD
 export default function Header() {
   const { unreadNotificationCount, setNotifications } = useStore()
   const { user, signOut, loading } = useAuth()
+  const { t } = useLanguage()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -65,7 +67,7 @@ export default function Header() {
       <div className="flex items-center gap-2 sm:gap-3">
         <Link href="/" className="flex items-center gap-2">
           <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
-          <span className="hidden sm:inline text-xl font-bold">ThreeGallery</span>
+          <span className="hidden sm:inline text-xl font-bold text-white">ThreeGallery</span>
         </Link>
       </div>
 
@@ -75,7 +77,7 @@ export default function Header() {
           <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative rounded-lg p-1.5 sm:p-2 hover:bg-gray-700"
+              className="relative rounded-lg p-1.5 sm:p-2 text-gray-300 hover:bg-gray-700"
               aria-label="通知"
             >
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -119,30 +121,30 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-48 rounded-lg bg-gray-800 py-2 shadow-lg border border-gray-700 z-50">
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-gray-300"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <User className="h-4 w-4" />
-                    プロフィール
+                    {t.nav.profile}
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-gray-300"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <Settings className="h-4 w-4" />
-                    設定
+                    {t.nav.settings}
                   </Link>
-                  <hr className="my-2" />
+                  <hr className="my-2 border-gray-600" />
                   <button
                     onClick={() => {
                       signOut()
                       setShowUserMenu(false)
                     }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-700 text-red-400"
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-gray-700"
                   >
                     <LogOut className="h-4 w-4" />
-                    ログアウト
+                    {t.common.logout}
                   </button>
                 </div>
               )}
@@ -150,9 +152,9 @@ export default function Header() {
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}
-              className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 transition-colors text-gray-200"
+              className="rounded-lg px-4 py-2 text-sm font-medium bg-gray-800 text-gray-200 hover:bg-gray-700 transition-colors"
             >
-              ログイン
+              {t.common.login}
             </button>
           )
         )}
